@@ -1,0 +1,1813 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Senior-engineer-level research on tools, frameworks, and infrastructure.">
+      
+      
+      
+      
+        <link rel="prev" href="../03_bisect_regression_hunting/">
+      
+      
+        <link rel="next" href="../05_worktree_parallel_development/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Extracting a Service from a Monorepo with Filter-Repo - Tool Research</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#extracting-a-service-from-a-monorepo-with-filter-repo" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Tool Research" class="md-header__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tool Research
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Extracting a Service from a Monorepo with Filter-Repo
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../dbt/" class="md-tabs__link">
+          
+  
+  
+  DBT
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  GIT
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Tool Research" class="md-nav__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tool Research
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DBT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DBT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/01_staging_layer_from_raw_sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Staging Layer From Raw Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/02_incremental_event_stream_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Event Stream Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/03_dimensional_model_star_schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dimensional Model Star Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/04_custom_macros_cross_db_compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Macros Cross Db Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/05_ci_cd_slim_deployments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ci Cd Slim Deployments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    GIT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_surgical_history_rewrite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Surgical History Rewrite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_untangling_diverged_branches/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Untangling Diverged Branches
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_bisect_regression_hunting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bisect Regression Hunting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monorepo Subtree Extraction
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monorepo Subtree Extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-a-fresh-clone-for-surgery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create a Fresh Clone for Surgery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-analyze-the-directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Analyze the Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-run-the-initial-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Run the Initial Extraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-include-shared-dependencies-if-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Include Shared Dependencies (If Needed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-clean-up-commit-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Clean Up Commit Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-verify-author-attribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Verify Author Attribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-set-up-the-new-remote-and-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Set Up the New Remote and Push
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-8-create-tombstone-in-original-monorepo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Create Tombstone in Original Monorepo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running It
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-to-watch-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What To Watch For
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What To Watch For">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-empty-commits-and-merge-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Empty Commits and Merge Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-submodule-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Submodule References
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-large-files-and-git-lfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Large Files and Git LFS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-branch-and-tag-contamination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Branch and Tag Contamination
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_worktree_parallel_development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worktree Parallel Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-a-fresh-clone-for-surgery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create a Fresh Clone for Surgery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-analyze-the-directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Analyze the Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-run-the-initial-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Run the Initial Extraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-include-shared-dependencies-if-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Include Shared Dependencies (If Needed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-clean-up-commit-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Clean Up Commit Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-verify-author-attribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Verify Author Attribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-set-up-the-new-remote-and-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Set Up the New Remote and Push
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-8-create-tombstone-in-original-monorepo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Create Tombstone in Original Monorepo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running It
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-to-watch-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What To Watch For
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What To Watch For">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-empty-commits-and-merge-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Empty Commits and Merge Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-submodule-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Submodule References
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-large-files-and-git-lfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Large Files and Git LFS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-branch-and-tag-contamination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Branch and Tag Contamination
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="extracting-a-service-from-a-monorepo-with-filter-repo">Extracting a Service from a Monorepo with Filter-Repo</h1>
+<h2 id="overview">Overview</h2>
+<p>When an engineering organization matures, monorepos often need to be decomposed into independent repositories. This might happen when a team needs independent deployment cycles, when you're spinning off a service to a separate team, or when the monorepo has grown unwieldy for certain workflows.</p>
+<p>The challenge isn't just copying files—it's preserving commit history, maintaining author attribution, rewriting paths so the extracted service becomes the repository root, and cleaning up references to unrelated code. <code>git filter-repo</code> is the modern replacement for <code>git filter-branch</code>, offering dramatically better performance and a cleaner interface for these repository surgery operations.</p>
+<p>This walkthrough demonstrates extracting a <code>payments-service</code> from a monorepo structured like:</p>
+<div class="highlight"><pre><span></span><code>platform/
+├── services/
+│   ├── payments-service/
+│   ├── user-service/
+│   └── notification-service/
+├── libs/
+│   └── shared-utils/
+├── infrastructure/
+└── docs/
+</code></pre></div>
+<p>We'll extract <code>payments-service</code> into its own repository where <code>services/payments-service/</code> becomes the root, all irrelevant history is removed, and commits touching only other services disappear entirely.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p><strong>Software Requirements:</strong>
+- Git 2.22+ (for <code>git filter-repo</code> compatibility)
+- Python 3.5+ (filter-repo is a Python script)
+- <code>git-filter-repo</code> installed:
+  <div class="highlight"><pre><span></span><code><span class="c1"># macOS</span>
+brew<span class="w"> </span>install<span class="w"> </span>git-filter-repo
+
+<span class="c1"># pip (any platform)</span>
+pip3<span class="w"> </span>install<span class="w"> </span>git-filter-repo
+
+<span class="c1"># Verify installation</span>
+git<span class="w"> </span>filter-repo<span class="w"> </span>--version
+</code></pre></div></p>
+<p><strong>Repository Requirements:</strong>
+- Push access to create the new target repository
+- A clean clone of the monorepo (we'll be rewriting history)
+- No uncommitted changes in your working copy</p>
+<p><strong>Knowledge Assumptions:</strong>
+- Familiarity with Git fundamentals (commits, refs, remotes)
+- Understanding of your monorepo's directory structure
+- Awareness of any path-based CI/CD triggers that may need updating</p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="step-1-create-a-fresh-clone-for-surgery">Step 1: Create a Fresh Clone for Surgery</h3>
+<p>Never perform filter-repo operations on your working copy or a repository with valuable local state. Always start with a fresh clone.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Clone with full history but without checking out a working tree yet</span>
+<span class="c1"># Using --no-checkout speeds up the initial clone for large repos</span>
+git<span class="w"> </span>clone<span class="w"> </span>--no-checkout<span class="w"> </span>git@github.com:acme-corp/platform-monorepo.git<span class="w"> </span>payments-service-extraction
+
+<span class="nb">cd</span><span class="w"> </span>payments-service-extraction
+
+<span class="c1"># Now check out the default branch</span>
+git<span class="w"> </span>checkout<span class="w"> </span>main
+
+<span class="c1"># Verify you&#39;re on a fresh clone with no remotes we care about preserving</span>
+git<span class="w"> </span>remote<span class="w"> </span>-v
+<span class="c1"># origin  git@github.com:acme-corp/platform-monorepo.git (fetch)</span>
+<span class="c1"># origin  git@github.com:acme-corp/platform-monorepo.git (push)</span>
+</code></pre></div>
+<p><strong>Why a fresh clone?</strong> <code>git filter-repo</code> rewrites commit SHAs. If you run this on a shared clone, you'll create divergent history that can't be reconciled with the original. The fresh clone is disposable—if something goes wrong, delete it and start over.</p>
+<h3 id="step-2-analyze-the-directory-structure">Step 2: Analyze the Directory Structure</h3>
+<p>Before extracting, understand exactly what you're pulling out and what dependencies exist.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># List the directory structure of the service we want to extract</span>
+find<span class="w"> </span>services/payments-service<span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;*.go&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-20
+
+<span class="c1"># Check for imports from other parts of the monorepo</span>
+<span class="c1"># This helps identify if we need to include additional paths</span>
+grep<span class="w"> </span>-r<span class="w"> </span><span class="s2">&quot;acme-corp/platform-monorepo/libs&quot;</span><span class="w"> </span>services/payments-service/<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No shared lib imports found&quot;</span>
+
+<span class="c1"># Count commits touching this directory (gives you a sense of history size)</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>--<span class="w"> </span>services/payments-service<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+
+<span class="c1"># Identify contributors to this service (for attribution verification later)</span>
+git<span class="w"> </span>shortlog<span class="w"> </span>-sn<span class="w"> </span>--<span class="w"> </span>services/payments-service
+</code></pre></div>
+<p>For our example, let's say we find:
+- 847 commits touch <code>services/payments-service</code>
+- The service imports from <code>libs/shared-utils/pkg/money</code> (a currency handling library)
+- 12 unique contributors have worked on this service</p>
+<h3 id="step-3-run-the-initial-extraction">Step 3: Run the Initial Extraction</h3>
+<p>The core operation uses <code>--subdirectory-filter</code> equivalent functionality through <code>--path</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Extract only the payments-service directory</span>
+<span class="c1"># --path specifies which paths to keep</span>
+<span class="c1"># --path-rename moves the extracted path to repository root</span>
+git<span class="w"> </span>filter-repo<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--path<span class="w"> </span>services/payments-service/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--path-rename<span class="w"> </span>services/payments-service/:
+
+<span class="c1"># Verify the extraction worked</span>
+ls<span class="w"> </span>-la
+<span class="c1"># Should now show contents of what was services/payments-service/ at root:</span>
+<span class="c1"># cmd/</span>
+<span class="c1"># internal/</span>
+<span class="c1"># pkg/</span>
+<span class="c1"># go.mod</span>
+<span class="c1"># go.sum</span>
+<span class="c1"># Dockerfile</span>
+<span class="c1"># README.md</span>
+</code></pre></div>
+<p><strong>What just happened:</strong>
+1. Every commit not touching <code>services/payments-service/</code> was removed
+2. Remaining commits were rewritten with new SHAs
+3. The path prefix <code>services/payments-service/</code> was stripped from all file paths
+4. Empty merge commits were removed by default
+5. The original remote was removed (filter-repo does this intentionally as a safety measure)</p>
+<h3 id="step-4-include-shared-dependencies-if-needed">Step 4: Include Shared Dependencies (If Needed)</h3>
+<p>If the service depends on shared libraries that should travel with it, you need a more complex extraction:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Start over with a fresh clone for this approach</span>
+<span class="nb">cd</span><span class="w"> </span>..
+rm<span class="w"> </span>-rf<span class="w"> </span>payments-service-extraction
+git<span class="w"> </span>clone<span class="w"> </span>git@github.com:acme-corp/platform-monorepo.git<span class="w"> </span>payments-service-extraction
+<span class="nb">cd</span><span class="w"> </span>payments-service-extraction
+
+<span class="c1"># Extract multiple paths, keeping their relative structure first</span>
+git<span class="w"> </span>filter-repo<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--path<span class="w"> </span>services/payments-service/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--path<span class="w"> </span>libs/shared-utils/pkg/money/
+</code></pre></div>
+<p>Now we need to reorganize the directory structure. Create a path mapping file:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a file specifying path transformations</span>
+cat<span class="w"> </span>&gt;<span class="w"> </span>/tmp/path-mappings.txt<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s"># Move the service to root, keep shared lib in a vendor-like location</span>
+<span class="s">regex:^services/payments-service/(.*)$==&gt;\1</span>
+<span class="s">regex:^libs/shared-utils/(.*)$==&gt;vendor/acme-internal/\1</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Apply the path rewriting</span>
+git<span class="w"> </span>filter-repo<span class="w"> </span>--paths-from-file<span class="w"> </span>/tmp/path-mappings.txt<span class="w"> </span>--replace-refs<span class="w"> </span>delete-no-add
+</code></pre></div>
+<p><strong>Why this two-step approach?</strong> Filter-repo's <code>--path</code> and <code>--path-rename</code> options don't compose well for complex restructuring. Using a paths file with regex gives precise control over where each extracted component lands.</p>
+<h3 id="step-5-clean-up-commit-messages">Step 5: Clean Up Commit Messages</h3>
+<p>Monorepo commits often reference ticket systems with paths or other services. Let's clean those up:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Save as /tmp/message-rewriter.py</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rewrite_message</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+    <span class="c1"># Remove path prefixes from commit messages that referenced the old location</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s1">&#39;services/payments-service/&#39;</span><span class="p">,</span> 
+        <span class="s1">&#39;&#39;</span><span class="p">,</span> 
+        <span class="n">message</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Update any internal references to the monorepo structure</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s1">&#39;platform-monorepo#(\d+)&#39;</span><span class="p">,</span>
+        <span class="sa">r</span><span class="s1">&#39;platform-monorepo#\1 (historical reference)&#39;</span><span class="p">,</span>
+        <span class="n">message</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Preserve JIRA/ticket references as-is (PAY-123 style)</span>
+    <span class="c1"># No modification needed, but this is where you&#39;d transform if needed</span>
+
+    <span class="k">return</span> <span class="n">message</span>
+
+<span class="c1"># git filter-repo calls this with message as argument</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">original</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">modified</span> <span class="o">=</span> <span class="n">rewrite_message</span><span class="p">(</span><span class="n">original</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">modified</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Apply the message callback</span>
+chmod<span class="w"> </span>+x<span class="w"> </span>/tmp/message-rewriter.py
+
+git<span class="w"> </span>filter-repo<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--message-callback<span class="w"> </span><span class="s1">&#39;</span>
+<span class="s1">        message = message.decode(&quot;utf-8&quot;)</span>
+<span class="s1">        message = message.replace(&quot;services/payments-service/&quot;, &quot;&quot;)</span>
+<span class="s1">        return message.encode(&quot;utf-8&quot;)</span>
+<span class="s1">    &#39;</span>
+</code></pre></div>
+<h3 id="step-6-verify-author-attribution">Step 6: Verify Author Attribution</h3>
+<p>Ensure contributor information survived the extraction intact:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Compare before and after (you saved this from Step 2)</span>
+git<span class="w"> </span>shortlog<span class="w"> </span>-sn
+
+<span class="c1"># Check for any commits with missing author info</span>
+git<span class="w"> </span>log<span class="w"> </span>--format<span class="o">=</span><span class="s1">&#39;%ae %an&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u
+
+<span class="c1"># Verify GPG signatures are noted (they&#39;ll be invalid after rewrite, but should be preserved as historical record)</span>
+git<span class="w"> </span>log<span class="w"> </span>--show-signature<span class="w"> </span>-1<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-5
+</code></pre></div>
+<p>If your organization uses a mailmap, apply it now:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a mailmap for email normalization</span>
+cat<span class="w"> </span>&gt;<span class="w"> </span>.mailmap<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">Jane Developer &lt;jane.developer@acme-corp.com&gt; &lt;jane.d@old-domain.com&gt;</span>
+<span class="s">Jane Developer &lt;jane.developer@acme-corp.com&gt; &lt;jdeveloper@contractor.com&gt;</span>
+<span class="s">EOF</span>
+
+git<span class="w"> </span>filter-repo<span class="w"> </span>--mailmap<span class="w"> </span>.mailmap
+</code></pre></div>
+<h3 id="step-7-set-up-the-new-remote-and-push">Step 7: Set Up the New Remote and Push</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create the new repository on GitHub/GitLab first (via UI or CLI)</span>
+<span class="c1"># gh repo create acme-corp/payments-service --private</span>
+
+<span class="c1"># Add the new remote</span>
+git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>origin<span class="w"> </span>git@github.com:acme-corp/payments-service.git
+
+<span class="c1"># Push all branches and tags</span>
+git<span class="w"> </span>push<span class="w"> </span>--set-upstream<span class="w"> </span>origin<span class="w"> </span>main
+git<span class="w"> </span>push<span class="w"> </span>--all<span class="w"> </span>origin
+git<span class="w"> </span>push<span class="w"> </span>--tags<span class="w"> </span>origin
+
+<span class="c1"># Verify the push</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>-10<span class="w"> </span>origin/main
+</code></pre></div>
+<h3 id="step-8-create-tombstone-in-original-monorepo">Step 8: Create Tombstone in Original Monorepo</h3>
+<p>Back in the original monorepo, mark the extraction clearly:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>../platform-monorepo<span class="w">  </span><span class="c1"># Your normal working copy</span>
+
+<span class="c1"># Create a tombstone file</span>
+cat<span class="w"> </span>&gt;<span class="w"> </span>services/payments-service/EXTRACTED.md<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s"># ⚠️ This Service Has Been Extracted</span>
+
+<span class="s">**Extraction Date:** 2024-01-15</span>
+<span class="s">**New Repository:** https://github.com/acme-corp/payments-service</span>
+<span class="s">**Extraction Commit:** abc123def (in this repo)</span>
+
+<span class="s">This directory is preserved as a tombstone to:</span>
+<span class="s">1. Prevent accidental recreation of this path</span>
+<span class="s">2. Document the migration for historical context</span>
+<span class="s">3. Provide redirect information for developers</span>
+
+<span class="s">For CI/CD purposes, changes to this directory should be ignored.</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Remove the actual code but keep the tombstone</span>
+git<span class="w"> </span>rm<span class="w"> </span>-r<span class="w"> </span>services/payments-service/cmd<span class="w"> </span>services/payments-service/internal<span class="w"> </span>services/payments-service/pkg
+git<span class="w"> </span>add<span class="w"> </span>services/payments-service/EXTRACTED.md
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;chore: extract payments-service to dedicated repository</span>
+
+<span class="s2">The payments-service has been extracted to its own repository</span>
+<span class="s2">for independent deployment and team autonomy.</span>
+
+<span class="s2">New location: https://github.com/acme-corp/payments-service</span>
+
+<span class="s2">History was preserved using git-filter-repo.&quot;</span>
+
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>main
+</code></pre></div>
+<h2 id="running-it">Running It</h2>
+<p>Here's the complete extraction as a single executable script:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
+<span class="nb">set</span><span class="w"> </span>-euo<span class="w"> </span>pipefail
+
+<span class="c1"># Configuration</span>
+<span class="nv">MONOREPO_URL</span><span class="o">=</span><span class="s2">&quot;git@github.com:acme-corp/platform-monorepo.git&quot;</span>
+<span class="nv">SERVICE_PATH</span><span class="o">=</span><span class="s2">&quot;services/payments-service&quot;</span>
+<span class="nv">NEW_REPO_URL</span><span class="o">=</span><span class="s2">&quot;git@github.com:acme-corp/payments-service.git&quot;</span>
+<span class="nv">WORK_DIR</span><span class="o">=</span><span class="k">$(</span>mktemp<span class="w"> </span>-d<span class="k">)</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Working in: </span><span class="nv">$WORK_DIR</span><span class="s2">&quot;</span>
+<span class="nb">cd</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$WORK_DIR</span><span class="s2">&quot;</span>
+
+<span class="c1"># Step 1: Fresh clone</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&gt;&gt;&gt; Cloning monorepo...&quot;</span>
+git<span class="w"> </span>clone<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$MONOREPO_URL</span><span class="s2">&quot;</span><span class="w"> </span>extraction
+<span class="nb">cd</span><span class="w"> </span>extraction
+
+<span class="c1"># Step 2: Record pre-extraction stats</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&gt;&gt;&gt; Recording pre-extraction statistics...&quot;</span>
+<span class="nv">COMMIT_COUNT</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>--<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SERVICE_PATH</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39; &#39;</span><span class="k">)</span>
+<span class="nv">CONTRIBUTOR_COUNT</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>shortlog<span class="w"> </span>-sn<span class="w"> </span>--<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SERVICE_PATH</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39; &#39;</span><span class="k">)</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Found </span><span class="nv">$COMMIT_COUNT</span><span class="s2"> commits from </span><span class="nv">$CONTRIBUTOR_COUNT</span><span class="s2"> contributors&quot;</span>
+
+<span class="c1"># Step 3: Extract</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&gt;&gt;&gt; Extracting </span><span class="nv">$SERVICE_PATH</span><span class="s2">...&quot;</span>
+git<span class="w"> </span>filter-repo<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--path<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SERVICE_PATH</span><span class="s2">/&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--path-rename<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SERVICE_PATH</span><span class="s2">/:&quot;</span>
+
+<span class="c1"># Step 4: Verify extraction</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&gt;&gt;&gt; Verifying extraction...&quot;</span>
+<span class="nv">POST_COMMIT_COUNT</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39; &#39;</span><span class="k">)</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Extracted repository has </span><span class="nv">$POST_COMMIT_COUNT</span><span class="s2"> commits&quot;</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$POST_COMMIT_COUNT</span><span class="s2">&quot;</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ERROR: No commits survived extraction. Check the SERVICE_PATH.&quot;</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="k">fi</span>
+
+<span class="c1"># Step 5: Push to new repository</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&gt;&gt;&gt; Pushing to new repository...&quot;</span>
+git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>origin<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$NEW_REPO_URL</span><span class="s2">&quot;</span>
+git<span class="w"> </span>push<span class="w"> </span>--set-upstream<span class="w"> </span>origin<span class="w"> </span>main<span class="w"> </span>--force
+git<span class="w"> </span>push<span class="w"> </span>--tags<span class="w"> </span>origin
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&gt;&gt;&gt; Extraction complete!&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;New repository: </span><span class="nv">$NEW_REPO_URL</span><span class="s2">&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Working directory preserved at: </span><span class="nv">$WORK_DIR</span><span class="s2">&quot;</span>
+</code></pre></div>
+<p>Execute with:</p>
+<div class="highlight"><pre><span></span><code>chmod<span class="w"> </span>+x<span class="w"> </span>extract-service.sh
+./extract-service.sh
+</code></pre></div>
+<h2 id="what-to-watch-for">What To Watch For</h2>
+<h3 id="1-empty-commits-and-merge-commits">1. Empty Commits and Merge Commits</h3>
+<p>Filter-repo removes empty commits by default, but merge commits that become empty (because they merged changes outside your extracted path) can leave confusing history.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check for merge commits that might look orphaned</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>--merges<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-20
+
+<span class="c1"># If you see confusing merges, you can flatten history (destructive!)</span>
+git<span class="w"> </span>filter-repo<span class="w"> </span>--prune-empty<span class="w"> </span>always<span class="w"> </span>--prune-degenerate<span class="w"> </span>always
+</code></pre></div>
+<h3 id="2-submodule-references">2. Submodule References</h3>
+<p>If your monorepo contained submodules, and any paths within submodules overlapped with your extraction pattern, you'll get corrupted history.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check for submodules before extraction</span>
+git<span class="w"> </span>submodule<span class="w"> </span>status
+
+<span class="c1"># If submodules exist, you may need to deinit them first or exclude their paths</span>
+</code></pre></div>
+<h3 id="3-large-files-and-git-lfs">3. Large Files and Git LFS</h3>
+<p>Files tracked by Git LFS will have their pointer files extracted, but you'll need to ensure LFS is configured in the new repository and that you have access to the LFS storage.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check for LFS files in the extracted content</span>
+git<span class="w"> </span>lfs<span class="w"> </span>ls-files
+
+<span class="c1"># If LFS files exist, ensure tracking rules are in place</span>
+cat<span class="w"> </span>.gitattributes
+</code></pre></div>
+<h3 id="4-branch-and-tag-contamination">4. Branch and Tag Contamination</h3>
+<p>All branches and tags are processed by filter-repo. If a branch never touched your extracted path, it will become empty and may cause push failures.</p>
+<p>```bash</p>
+<h1 id="list-branches-that-survived-with-commits">List branches that survived with commits</h1>
+<p>for branch in</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
