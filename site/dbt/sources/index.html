@@ -1,0 +1,942 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Senior-engineer-level research on tools, frameworks, and infrastructure.">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../examples/01_staging_layer_from_raw_sources/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>dbt - Sources - Tool Research</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#dbt-top-sources" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Tool Research" class="md-header__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tool Research
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              dbt - Sources
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  DBT
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Tool Research" class="md-nav__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tool Research
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DBT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DBT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#annotated-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Annotated Sources
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Annotated Sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-getting-started-with-dbt-data-build-tool-a-beginners-guide-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Getting Started with dbt (Data Build Tool): A Beginner's Guide to ...
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-tutorial-create-run-and-test-dbt-models-locally-databricks-on-aws" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Tutorial: Create, run, and test dbt models locally | Databricks on AWS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/01_staging_layer_from_raw_sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Staging Layer From Raw Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/02_incremental_event_stream_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Event Stream Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/03_dimensional_model_star_schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dimensional Model Star Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/04_custom_macros_cross_db_compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Macros Cross Db Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/05_ci_cd_slim_deployments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ci Cd Slim Deployments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#annotated-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Annotated Sources
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Annotated Sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-getting-started-with-dbt-data-build-tool-a-beginners-guide-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Getting Started with dbt (Data Build Tool): A Beginner's Guide to ...
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-tutorial-create-run-and-test-dbt-models-locally-databricks-on-aws" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Tutorial: Create, run, and test dbt models locally | Databricks on AWS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="dbt-top-sources">dbt — Top Sources</h1>
+<p><em>Collected: 2026-03-06</em></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Title</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Getting Started with dbt (Data Build Tool): A Beginner's Guide to ...</td>
+<td><a href="https://medium.com/@suffyan.asad1/getting-started-with-dbt-data-build-tool-a-beginners-guide-to-building-data-transformations-28e335be5f7e">https://medium.com/@suffyan.asad1/getting-started-with-dbt-data-build-tool-a-beginners-guide-to-building-data-transformations-28e335be5f7e</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Tutorial: Create, run, and test dbt models locally</td>
+<td>Databricks on AWS</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Getting Started With dbt (Data Build Tool) To Run Data Transformation</td>
+<td><a href="https://www.youtube.com/watch?v=anZkGCFK87Y">https://www.youtube.com/watch?v=anZkGCFK87Y</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td>dbt(Data Build Tool) Tutorial - Start Data Engineering</td>
+<td><a href="https://www.startdataengineering.com/post/dbt-data-build-tool-tutorial/">https://www.startdataengineering.com/post/dbt-data-build-tool-tutorial/</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Understanding dbt: basics and best practices - Datadog</td>
+<td><a href="https://www.datadoghq.com/blog/understanding-dbt/">https://www.datadoghq.com/blog/understanding-dbt/</a></td>
+</tr>
+<tr>
+<td>6</td>
+<td>10 Essential dbt Tips and Tricks for Faster Development</td>
+<td><a href="https://tasman.ai/news/10-essential-dbt-tips-and-tricks-for-faster-development">https://tasman.ai/news/10-essential-dbt-tips-and-tricks-for-faster-development</a></td>
+</tr>
+<tr>
+<td>7</td>
+<td>What Are dbt Execution Best Practices?</td>
+<td><a href="https://www.phdata.io/blog/what-are-dbt-execution-best-practices/">https://www.phdata.io/blog/what-are-dbt-execution-best-practices/</a></td>
+</tr>
+<tr>
+<td>8</td>
+<td>7 dbt Testing Best Practices - Datafold</td>
+<td><a href="https://www.datafold.com/blog/7-dbt-testing-best-practices">https://www.datafold.com/blog/7-dbt-testing-best-practices</a></td>
+</tr>
+<tr>
+<td>9</td>
+<td>dbt Production Pitfalls: Avoid Common Errors for Reliable Analytics</td>
+<td><a href="https://www.linkedin.com/posts/sumonigupta_common-dbt-mistakes-teams-make-in-production-activity-7421529368952430592-aZ1h">https://www.linkedin.com/posts/sumonigupta_common-dbt-mistakes-teams-make-in-production-activity-7421529368952430592-aZ1h</a></td>
+</tr>
+<tr>
+<td>10</td>
+<td>dbt tips and tricks</td>
+<td>dbt Developer Hub</td>
+</tr>
+</tbody>
+</table>
+<h2 id="annotated-sources">Annotated Sources</h2>
+<h3 id="1-getting-started-with-dbt-data-build-tool-a-beginners-guide-to">1. <a href="https://medium.com/@suffyan.asad1/getting-started-with-dbt-data-build-tool-a-beginners-guide-to-building-data-transformations-28e335be5f7e">Getting Started with dbt (Data Build Tool): A Beginner's Guide to ...</a></h3>
+<p>Running the image</p>
+<p>This concludes the introductory tutorial, which aims to stay as simple as possible and focused on dbt by avoiding getting sidetracked by tasks such as setting up accounts and other tools as much as possible. We constructed a basic star schema using the Adventure Works example data</p>
+<h3 id="2-tutorial-create-run-and-test-dbt-models-locally-databricks-on-aws">2. <a href="https://docs.databricks.com/aws/en/integrations/dbt-core-tutorial">Tutorial: Create, run, and test dbt models locally | Databricks on AWS</a></h3>
+<p>Last updated on</p>
+<h1 id="tutorial-create-run-and-test-dbt-models-locally">Tutorial: Create, run, and test dbt models locally</h1>
+<p>This tutorial walks you through how to create, run, and test dbt models locally. You can also run dbt projects as Databricksjob tasks. For more information, see Use dbt transformations in Lakeflow Jobs.</p>
+<h2 id="before-you-begin">Before you begin​</h2>
+<p>To </p>
+<h3 id="3-getting-started-with-dbt-data-build-tool-to-run-data-transformation">3. <a href="https://www.youtube.com/watch?v=anZkGCFK87Y">Getting Started With dbt (Data Build Tool) To Run Data Transformation</a></h3>
+<p>you just created on the top click Keys then go to add key and click create new key select Json as the key type and click create save the service account file in your project folder also it's recommended that you rename the service account name to something easy to recognize open a new instance of fi</p>
+<h3 id="4-dbtdata-build-tool-tutorial-start-data-engineering">4. <a href="https://www.startdataengineering.com/post/dbt-data-build-tool-tutorial/">dbt(Data Build Tool) Tutorial - Start Data Engineering</a></h3>
+<p>Note: The project repository has advanced features which are explained in the uplevel dbt workflow article. It is recommended to read this tutorial first before diving into the advanced features specified in the uplevel dbt workflow article article.</p>
+<h3 id="32-configurations-and-connections">3.2. Configurations and connections</h3>
+<p>Let’s se</p>
+<h3 id="5-understanding-dbt-basics-and-best-practices-datadog">5. <a href="https://www.datadoghq.com/blog/understanding-dbt/">Understanding dbt: basics and best practices - Datadog</a></h3>
+<p>By abstracting complex transformations into reusable models and integrating seamlessly with the modern data stack, dbt enables teams to build scalable, trustworthy, and auditable data pipelines. This makes dbt an increasingly popular tool for analytics engineering teams, as it helps them simplify co</p>
+<h3 id="6-10-essential-dbt-tips-and-tricks-for-faster-development">6. <a href="https://tasman.ai/news/10-essential-dbt-tips-and-tricks-for-faster-development">10 Essential dbt Tips and Tricks for Faster Development</a></h3>
+<p>Assuming your production dbt runs are using the default branch of your dbt project’s repo, you just need to:</p>
+<ol>
+<li>Generate the prod state of your dbt project by running <code>dbt parse --target-path prod-run-artefacts</code> on your default branch (you might also need to use your prod profile, too)</li>
+<li>Switch to</li>
+</ol>
+<h3 id="7-what-are-dbt-execution-best-practices">7. <a href="https://www.phdata.io/blog/what-are-dbt-execution-best-practices/">What Are dbt Execution Best Practices?</a></h3>
+<p>Improve customer experiences, optimize prices, and succeed with data, faster.</p>
+<p>Tap into the potential of telemetry, IoT, supply-chain optimization, and more.</p>
+<p>Save time. Save money. Save lives with your healthcare data.</p>
+<h1 id="what-are-dbt-execution-best-practices">What Are dbt Execution Best Practices?</h1>
+<p>One of the more common practices when</p>
+<h3 id="8-7-dbt-testing-best-practices-datafold">8. <a href="https://www.datafold.com/blog/7-dbt-testing-best-practices">7 dbt Testing Best Practices - Datafold</a></h3>
+<div class="highlight"><pre><span></span><code>select  
+ transaction_id,  
+ from {{ ref(&#39;fact_transactions&#39; )}}  
+where quantity &lt; 0  
+</code></pre></div>
+<h4 id="tip-use-extensions-for-writing-dbt-data-tests-faster">Tip: Use extensions for writing dbt data tests faster</h4>
+<p>‍</p>
+<p>As an open-source framework, dbt is easily extensible with packages that can be discovered through dbt Package hub. Two packages can be </p>
+<h3 id="9-dbt-production-pitfalls-avoid-common-errors-for-reliable-analytics">9. <a href="https://www.linkedin.com/posts/sumonigupta_common-dbt-mistakes-teams-make-in-production-activity-7421529368952430592-aZ1h">dbt Production Pitfalls: Avoid Common Errors for Reliable Analytics</a></h3>
+<p>The real magic of dbt isn’t modeling data.
+It’s how safely and reliably those models reach production.
+Anyone can write a SQL model.
+Only a few teams run a deployment process that never breaks dashboards, freshness checks, or downstream apps.
+This flow shows how modern data teams ship dbt changes wi</p>
+<h3 id="10-dbt-tips-and-tricks-dbt-developer-hub">10. <a href="https://docs.getdbt.com/docs/build/dbt-tips">dbt tips and tricks | dbt Developer Hub</a></h3>
+<p>Use seeds to create manual lookup tables, like zip codes to states or marketing UTMs to campaigns. <code>dbt seed</code> will build these from CSVs into your warehouse and make them <code>ref</code> able in your models.
+ Use target.name to pivot logic based on what environment you’re using. For example, to build into a s</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

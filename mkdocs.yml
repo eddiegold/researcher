@@ -1,0 +1,31 @@
+site_name: Tool Research
+site_description: Senior-engineer-level research on tools, frameworks, and infrastructure.
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: indigo
+  features:
+  - navigation.tabs
+  - navigation.sections
+  - navigation.expand
+  - search.highlight
+  - content.code.copy
+markdown_extensions:
+- pymdownx.highlight
+- pymdownx.superfences
+- pymdownx.tabbed
+- admonition
+- tables
+- toc
+nav:
+- Home: index.md
+- DBT:
+  - Overview: dbt/index.md
+  - Sources: dbt/sources.md
+  - Examples:
+    - Staging Layer From Raw Sources: dbt/examples/01_staging_layer_from_raw_sources.md
+    - Incremental Event Stream Processing: dbt/examples/02_incremental_event_stream_processing.md
+    - Dimensional Model Star Schema: dbt/examples/03_dimensional_model_star_schema.md
+    - Custom Macros Cross Db Compatibility: dbt/examples/04_custom_macros_cross_db_compatibility.md
+    - Ci Cd Slim Deployments: dbt/examples/05_ci_cd_slim_deployments.md

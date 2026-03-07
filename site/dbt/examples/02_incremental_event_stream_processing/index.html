@@ -1,0 +1,1279 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Senior-engineer-level research on tools, frameworks, and infrastructure.">
+      
+      
+      
+      
+        <link rel="prev" href="../01_staging_layer_from_raw_sources/">
+      
+      
+        <link rel="next" href="../03_dimensional_model_star_schema/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Incremental Models for High-Volume Event Data - Tool Research</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#incremental-models-for-high-volume-event-data" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Tool Research" class="md-header__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tool Research
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Incremental Models for High-Volume Event Data
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  DBT
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Tool Research" class="md-nav__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tool Research
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DBT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DBT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_staging_layer_from_raw_sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Staging Layer From Raw Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Event Stream Processing
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Event Stream Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-define-the-source-with-freshness-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Define the Source with Freshness Checks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-create-a-lookback-window-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Create a Lookback Window Macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-build-the-core-incremental-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Build the Core Incremental Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-add-model-documentation-and-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Add Model Documentation and Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_dimensional_model_star_schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dimensional Model Star Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_custom_macros_cross_db_compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Macros Cross Db Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_ci_cd_slim_deployments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ci Cd Slim Deployments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-define-the-source-with-freshness-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Define the Source with Freshness Checks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-create-a-lookback-window-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Create a Lookback Window Macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-build-the-core-incremental-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Build the Core Incremental Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-add-model-documentation-and-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Add Model Documentation and Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="incremental-models-for-high-volume-event-data">Incremental Models for High-Volume Event Data</h1>
+<h2 id="overview">Overview</h2>
+<p>When your analytics warehouse ingests billions of clickstream events daily, running full table scans on every dbt run becomes untenable. A single run might take hours, cost thousands of dollars in compute, and block downstream consumers. Incremental models solve this by processing only new or changed data since the last run.</p>
+<p>This walkthrough demonstrates building a production-grade incremental model that:</p>
+<ol>
+<li>Processes only new clickstream events using timestamp-based filtering</li>
+<li>Handles late-arriving data through configurable lookback windows</li>
+<li>Uses merge strategies to correctly handle duplicates and updates</li>
+<li>Avoids common pitfalls that silently reintroduce full table scans</li>
+</ol>
+<p>We'll build a model that transforms raw clickstream events into a sessionized fact table, processing approximately 500M events per day while keeping run times under 15 minutes.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p><strong>Infrastructure:</strong>
+- dbt Core 1.6+ or dbt Cloud
+- Snowflake, BigQuery, or Databricks (examples use Snowflake syntax with adapter notes)
+- Access to a warehouse with at least MEDIUM sizing for initial backfill</p>
+<p><strong>Knowledge:</strong>
+- Familiarity with dbt models, sources, and the ref() function
+- Understanding of SQL merge operations
+- Basic awareness of your data warehouse's partitioning/clustering capabilities</p>
+<p><strong>Source Data:</strong>
+Your raw clickstream events should exist in a source table with this approximate shape:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Example: raw.clickstream_events</span>
+<span class="c1">-- ~500M rows/day, ~2 years of history</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">raw</span><span class="p">.</span><span class="n">clickstream_events</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="n">event_id</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span><span class="w">           </span><span class="c1">-- UUID, globally unique</span>
+<span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span><span class="w">            </span><span class="c1">-- Can be null for anonymous users</span>
+<span class="w">    </span><span class="n">anonymous_id</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span><span class="w">       </span><span class="c1">-- Device/cookie identifier</span>
+<span class="w">    </span><span class="n">event_type</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span><span class="w">         </span><span class="c1">-- &#39;page_view&#39;, &#39;click&#39;, &#39;form_submit&#39;, etc.</span>
+<span class="w">    </span><span class="n">event_timestamp</span><span class="w"> </span><span class="n">TIMESTAMP_NTZ</span><span class="p">,</span>
+<span class="w">    </span><span class="n">page_url</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span>
+<span class="w">    </span><span class="n">referrer_url</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span>
+<span class="w">    </span><span class="n">device_type</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span>
+<span class="w">    </span><span class="n">browser</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span>
+<span class="w">    </span><span class="n">country_code</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span>
+<span class="w">    </span><span class="n">session_id</span><span class="w"> </span><span class="n">STRING</span><span class="p">,</span><span class="w">         </span><span class="c1">-- May be null, populated by upstream system</span>
+<span class="w">    </span><span class="n">properties</span><span class="w"> </span><span class="n">VARIANT</span><span class="p">,</span><span class="w">        </span><span class="c1">-- JSON blob of event-specific data</span>
+<span class="w">    </span><span class="n">received_at</span><span class="w"> </span><span class="n">TIMESTAMP_NTZ</span><span class="p">,</span><span class="w"> </span><span class="c1">-- When our ingestion pipeline received it</span>
+<span class="w">    </span><span class="n">_loaded_at</span><span class="w"> </span><span class="n">TIMESTAMP_NTZ</span><span class="w">   </span><span class="c1">-- When it landed in the warehouse</span>
+<span class="p">)</span>
+<span class="k">CLUSTER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="p">(</span><span class="n">TO_DATE</span><span class="p">(</span><span class="n">event_timestamp</span><span class="p">),</span><span class="w"> </span><span class="n">event_type</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Project Structure:</strong>
+<div class="highlight"><pre><span></span><code>your_dbt_project/
+├── dbt_project.yml
+├── models/
+│   └── marts/
+│       └── clickstream/
+│           ├── _clickstream__models.yml
+│           ├── fct_clickstream_events.sql
+│           └── int_clickstream_sessionized.sql
+└── macros/
+    └── incremental_lookback.sql
+</code></pre></div></p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="step-1-define-the-source-with-freshness-checks">Step 1: Define the Source with Freshness Checks</h3>
+<p>Before building incremental models, define your source with freshness expectations. This catches upstream pipeline failures before they cascade.</p>
+<p><strong>models/staging/sources.yml:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+
+<span class="nt">sources</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">raw_clickstream</span>
+<span class="w">    </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">raw</span>
+<span class="w">    </span><span class="nt">schema</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">clickstream</span>
+
+<span class="w">    </span><span class="c1"># Freshness tells dbt to alert if data stops flowing</span>
+<span class="w">    </span><span class="nt">freshness</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">warn_after</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> period</span><span class="p">:</span><span class="w"> </span><span class="nv">hour</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">error_after</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="nv">6</span><span class="p p-Indicator">,</span><span class="nt"> period</span><span class="p">:</span><span class="w"> </span><span class="nv">hour</span><span class="p p-Indicator">}</span>
+
+<span class="w">    </span><span class="c1"># Use _loaded_at for freshness, not event_timestamp</span>
+<span class="w">    </span><span class="c1"># Events can be old; what matters is whether they&#39;re still arriving</span>
+<span class="w">    </span><span class="nt">loaded_at_field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">_loaded_at</span>
+
+<span class="w">    </span><span class="nt">tables</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">events</span>
+<span class="w">        </span><span class="nt">identifier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">clickstream_events</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Raw</span><span class="nv"> </span><span class="s">clickstream</span><span class="nv"> </span><span class="s">events</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">Segment/Snowplow/etc.&quot;</span>
+
+<span class="w">        </span><span class="nt">columns</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">event_id</span>
+<span class="w">            </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Primary</span><span class="nv"> </span><span class="s">key</span><span class="nv"> </span><span class="s">-</span><span class="nv"> </span><span class="s">UUID</span><span class="nv"> </span><span class="s">generated</span><span class="nv"> </span><span class="s">at</span><span class="nv"> </span><span class="s">collection</span><span class="nv"> </span><span class="s">time&quot;</span>
+<span class="w">            </span><span class="nt">tests</span><span class="p">:</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">not_null</span>
+<span class="w">              </span><span class="c1"># unique test would be too expensive on 2B+ rows</span>
+<span class="w">              </span><span class="c1"># we handle duplicates in the incremental merge instead</span>
+</code></pre></div>
+<h3 id="step-2-create-a-lookback-window-macro">Step 2: Create a Lookback Window Macro</h3>
+<p>Late-arriving data is the primary gotcha with incremental models. Events might arrive hours or days after they occurred due to:
+- Mobile apps syncing when connectivity resumes
+- Batch uploads from offline systems<br />
+- Pipeline replay after failure recovery</p>
+<p>We'll create a macro that calculates a lookback window, making it configurable per model and environment.</p>
+<p><strong>macros/incremental_lookback.sql:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="err">{</span><span class="o">#</span>
+<span class="w">    </span><span class="n">Calculate</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">timestamp</span><span class="w"> </span><span class="n">threshold</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">incremental</span><span class="w"> </span><span class="n">loads</span><span class="p">.</span>
+
+<span class="w">    </span><span class="k">In</span><span class="w"> </span><span class="n">production</span><span class="p">,</span><span class="w"> </span><span class="n">we</span><span class="w"> </span><span class="n">look</span><span class="w"> </span><span class="n">back</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="n">hours</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="n">catch</span><span class="w"> </span><span class="n">late</span><span class="o">-</span><span class="n">arriving</span><span class="w"> </span><span class="k">data</span><span class="p">.</span>
+<span class="w">    </span><span class="k">In</span><span class="w"> </span><span class="n">CI</span><span class="o">/</span><span class="n">dev</span><span class="p">,</span><span class="w"> </span><span class="n">we</span><span class="w"> </span><span class="n">use</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="n">hour</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">faster</span><span class="w"> </span><span class="n">iteration</span><span class="p">.</span>
+
+<span class="w">    </span><span class="n">The</span><span class="w"> </span><span class="n">lookback</span><span class="w"> </span><span class="n">trades</span><span class="w"> </span><span class="k">off</span><span class="p">:</span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="n">Too</span><span class="w"> </span><span class="n">short</span><span class="p">:</span><span class="w"> </span><span class="n">miss</span><span class="w"> </span><span class="n">late</span><span class="o">-</span><span class="n">arriving</span><span class="w"> </span><span class="n">events</span><span class="p">,</span><span class="w"> </span><span class="n">causing</span><span class="w"> </span><span class="k">data</span><span class="w"> </span><span class="n">gaps</span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="n">Too</span><span class="w"> </span><span class="n">long</span><span class="p">:</span><span class="w"> </span><span class="n">reprocess</span><span class="w"> </span><span class="n">too</span><span class="w"> </span><span class="n">much</span><span class="w"> </span><span class="k">data</span><span class="p">,</span><span class="w"> </span><span class="n">negating</span><span class="w"> </span><span class="n">incremental</span><span class="w"> </span><span class="n">benefits</span>
+
+<span class="w">    </span><span class="n">Monitor</span><span class="w"> </span><span class="n">your</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="k">data</span><span class="s1">&#39;s arrival patterns to tune this.</span>
+<span class="s1">#}</span>
+
+<span class="s1">{% macro get_incremental_lookback_timestamp(</span>
+<span class="s1">    timestamp_column=&#39;</span><span class="n">event_timestamp</span><span class="s1">&#39;,</span>
+<span class="s1">    default_lookback_hours=3</span>
+<span class="s1">) %}</span>
+
+<span class="s1">    {#- Allow override via dbt variable for testing/backfills -#}</span>
+<span class="s1">    {% set lookback_hours = var(&#39;</span><span class="n">incremental_lookback_hours</span><span class="s1">&#39;, default_lookback_hours) %}</span>
+
+<span class="s1">    {#- Use shorter lookback in CI to speed up tests -#}</span>
+<span class="s1">    {% if target.name == &#39;</span><span class="n">ci</span><span class="err">&#39;</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+<span class="w">        </span><span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="n">lookback_hours</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+<span class="w">    </span><span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="n">endif</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+
+<span class="w">    </span><span class="p">(</span>
+<span class="w">        </span><span class="k">SELECT</span><span class="w"> </span>
+<span class="w">            </span><span class="n">DATEADD</span><span class="p">(</span>
+<span class="w">                </span><span class="n">hour</span><span class="p">,</span><span class="w"> </span>
+<span class="w">                </span><span class="o">-</span><span class="err">{{</span><span class="w"> </span><span class="n">lookback_hours</span><span class="w"> </span><span class="err">}}</span><span class="p">,</span><span class="w"> </span>
+<span class="w">                </span><span class="k">MAX</span><span class="p">(</span><span class="err">{{</span><span class="w"> </span><span class="n">timestamp_column</span><span class="w"> </span><span class="err">}}</span><span class="p">)</span>
+<span class="w">            </span><span class="p">)</span>
+<span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="n">this</span><span class="w"> </span><span class="err">}}</span>
+<span class="w">    </span><span class="p">)</span>
+
+<span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="n">endmacro</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+</code></pre></div>
+<h3 id="step-3-build-the-core-incremental-model">Step 3: Build the Core Incremental Model</h3>
+<p>Now we build the main fact table. This model:
+- Extracts and flattens the raw events
+- Applies business logic (event categorization, URL parsing)
+- Handles deduplication via merge
+- Processes only the incremental window on subsequent runs</p>
+<p><strong>models/marts/clickstream/fct_clickstream_events.sql:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="err">{{</span>
+<span class="w">    </span><span class="n">config</span><span class="p">(</span>
+<span class="w">        </span><span class="n">materialized</span><span class="o">=</span><span class="s1">&#39;incremental&#39;</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- MERGE strategy handles:</span>
+<span class="w">        </span><span class="c1">-- 1. New events (INSERT)</span>
+<span class="w">        </span><span class="c1">-- 2. Duplicate events from late-arriving data (no-op, already exists)</span>
+<span class="w">        </span><span class="c1">-- 3. Updated events if your source supports updates (UPDATE)</span>
+<span class="w">        </span><span class="n">incremental_strategy</span><span class="o">=</span><span class="s1">&#39;merge&#39;</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- The unique key for merge matching</span>
+<span class="w">        </span><span class="c1">-- Using event_id assumes your collection system guarantees uniqueness</span>
+<span class="w">        </span><span class="n">unique_key</span><span class="o">=</span><span class="s1">&#39;event_id&#39;</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Snowflake: cluster on date for efficient time-range queries</span>
+<span class="w">        </span><span class="c1">-- BigQuery users: use partition_by instead</span>
+<span class="w">        </span><span class="n">cluster_by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;event_date&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;event_type&#39;</span><span class="p">],</span>
+
+<span class="w">        </span><span class="c1">-- BigQuery partition config (uncomment if using BQ):</span>
+<span class="w">        </span><span class="c1">-- partition_by={</span>
+<span class="w">        </span><span class="c1">--     &quot;field&quot;: &quot;event_date&quot;,</span>
+<span class="w">        </span><span class="c1">--     &quot;data_type&quot;: &quot;date&quot;,</span>
+<span class="w">        </span><span class="c1">--     &quot;granularity&quot;: &quot;day&quot;</span>
+<span class="w">        </span><span class="c1">-- },</span>
+
+<span class="w">        </span><span class="c1">-- Merge behavior: what to do when unique_key matches</span>
+<span class="w">        </span><span class="c1">-- &#39;merge_update_columns&#39; limits which columns get updated</span>
+<span class="w">        </span><span class="c1">-- This is safer than updating everything and slightly faster</span>
+<span class="w">        </span><span class="n">merge_update_columns</span><span class="o">=</span><span class="p">[</span>
+<span class="w">            </span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span><span class="w">           </span><span class="c1">-- User might authenticate after initial event</span>
+<span class="w">            </span><span class="s1">&#39;session_id&#39;</span><span class="p">,</span><span class="w">        </span><span class="c1">-- Session might be assigned retroactively</span>
+<span class="w">            </span><span class="s1">&#39;processed_at&#39;</span><span class="w">       </span><span class="c1">-- Track when we last touched this row</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="err">}}</span>
+
+<span class="k">WITH</span><span class="w"> </span><span class="n">source_events</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+
+<span class="w">    </span><span class="k">SELECT</span>
+<span class="w">        </span><span class="n">event_id</span><span class="p">,</span>
+<span class="w">        </span><span class="n">user_id</span><span class="p">,</span>
+<span class="w">        </span><span class="n">anonymous_id</span><span class="p">,</span>
+<span class="w">        </span><span class="n">event_type</span><span class="p">,</span>
+<span class="w">        </span><span class="n">event_timestamp</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Parse out the event date for partitioning/clustering</span>
+<span class="w">        </span><span class="nb">DATE</span><span class="p">(</span><span class="n">event_timestamp</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">event_date</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Extract hour for time-of-day analysis</span>
+<span class="w">        </span><span class="k">EXTRACT</span><span class="p">(</span><span class="n">HOUR</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">event_timestamp</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">event_hour</span><span class="p">,</span>
+
+<span class="w">        </span><span class="n">page_url</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Parse URL components - these are expensive so we do it once here</span>
+<span class="w">        </span><span class="n">PARSE_URL</span><span class="p">(</span><span class="n">page_url</span><span class="p">):</span><span class="k">host</span><span class="p">::</span><span class="n">STRING</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">page_domain</span><span class="p">,</span>
+<span class="w">        </span><span class="n">PARSE_URL</span><span class="p">(</span><span class="n">page_url</span><span class="p">):</span><span class="n">path</span><span class="p">::</span><span class="n">STRING</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">page_path</span><span class="p">,</span>
+<span class="w">        </span><span class="n">SPLIT_PART</span><span class="p">(</span><span class="n">PARSE_URL</span><span class="p">(</span><span class="n">page_url</span><span class="p">):</span><span class="n">path</span><span class="p">::</span><span class="n">STRING</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">page_section</span><span class="p">,</span>
+
+<span class="w">        </span><span class="n">referrer_url</span><span class="p">,</span>
+<span class="w">        </span><span class="n">PARSE_URL</span><span class="p">(</span><span class="n">referrer_url</span><span class="p">):</span><span class="k">host</span><span class="p">::</span><span class="n">STRING</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">referrer_domain</span><span class="p">,</span>
+
+<span class="w">        </span><span class="n">device_type</span><span class="p">,</span>
+<span class="w">        </span><span class="n">browser</span><span class="p">,</span>
+<span class="w">        </span><span class="n">country_code</span><span class="p">,</span>
+<span class="w">        </span><span class="n">session_id</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Extract commonly-accessed properties from the JSON blob</span>
+<span class="w">        </span><span class="c1">-- This avoids repeated JSON parsing in downstream queries</span>
+<span class="w">        </span><span class="n">properties</span><span class="p">:</span><span class="n">product_id</span><span class="p">::</span><span class="n">STRING</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">product_id</span><span class="p">,</span>
+<span class="w">        </span><span class="n">properties</span><span class="p">:</span><span class="n">category</span><span class="p">::</span><span class="n">STRING</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">product_category</span><span class="p">,</span>
+<span class="w">        </span><span class="n">properties</span><span class="p">:</span><span class="n">search_query</span><span class="p">::</span><span class="n">STRING</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">search_query</span><span class="p">,</span>
+<span class="w">        </span><span class="n">properties</span><span class="p">:</span><span class="n">button_name</span><span class="p">::</span><span class="n">STRING</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">button_name</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Categorize events into broader groups for easier filtering</span>
+<span class="w">        </span><span class="k">CASE</span>
+<span class="w">            </span><span class="k">WHEN</span><span class="w"> </span><span class="n">event_type</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;page_view&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;screen_view&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="s1">&#39;pageview&#39;</span>
+<span class="w">            </span><span class="k">WHEN</span><span class="w"> </span><span class="n">event_type</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;tap&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;button_click&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="s1">&#39;interaction&#39;</span>
+<span class="w">            </span><span class="k">WHEN</span><span class="w"> </span><span class="n">event_type</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;form_submit&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;sign_up&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;login&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="s1">&#39;conversion&#39;</span>
+<span class="w">            </span><span class="k">WHEN</span><span class="w"> </span><span class="n">event_type</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;add_to_cart&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;remove_from_cart&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;purchase&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="s1">&#39;commerce&#39;</span>
+<span class="w">            </span><span class="k">WHEN</span><span class="w"> </span><span class="n">event_type</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;video_%&#39;</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="s1">&#39;media&#39;</span>
+<span class="w">            </span><span class="k">ELSE</span><span class="w"> </span><span class="s1">&#39;other&#39;</span>
+<span class="w">        </span><span class="k">END</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">event_category</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Track data lineage</span>
+<span class="w">        </span><span class="n">received_at</span><span class="p">,</span>
+<span class="w">        </span><span class="n">_loaded_at</span><span class="p">,</span>
+<span class="w">        </span><span class="k">CURRENT_TIMESTAMP</span><span class="p">()</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">processed_at</span>
+
+<span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">source</span><span class="p">(</span><span class="s1">&#39;raw_clickstream&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;events&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+
+<span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="mi">1</span><span class="o">=</span><span class="mi">1</span>
+<span class="w">        </span><span class="c1">-- Always filter out obviously invalid data</span>
+<span class="w">        </span><span class="k">AND</span><span class="w"> </span><span class="n">event_id</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="w">        </span><span class="k">AND</span><span class="w"> </span><span class="n">event_timestamp</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="w">        </span><span class="c1">-- Filter out events too far in the future (likely bad data)</span>
+<span class="w">        </span><span class="k">AND</span><span class="w"> </span><span class="n">event_timestamp</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="k">CURRENT_TIMESTAMP</span><span class="p">()</span>
+<span class="w">        </span><span class="c1">-- Filter out events before our business existed (definitely bad data)</span>
+<span class="w">        </span><span class="k">AND</span><span class="w"> </span><span class="n">event_timestamp</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="s1">&#39;2020-01-01&#39;</span>
+
+<span class="w">        </span><span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">is_incremental</span><span class="p">()</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+<span class="w">            </span><span class="c1">-- CRITICAL: This is where incremental magic happens</span>
+<span class="w">            </span><span class="c1">-- We only process events newer than our lookback threshold</span>
+<span class="w">            </span><span class="c1">--</span>
+<span class="w">            </span><span class="c1">-- Why event_timestamp and not _loaded_at?</span>
+<span class="w">            </span><span class="c1">-- - event_timestamp: catches late-arriving events being backfilled</span>
+<span class="w">            </span><span class="c1">-- - _loaded_at: would only catch newly-loaded data</span>
+<span class="w">            </span><span class="c1">-- </span>
+<span class="w">            </span><span class="c1">-- We use event_timestamp because we want to catch scenarios where</span>
+<span class="w">            </span><span class="c1">-- old events are replayed/backfilled into the source table.</span>
+<span class="w">            </span><span class="k">AND</span><span class="w"> </span><span class="n">event_timestamp</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="n">get_incremental_lookback_timestamp</span><span class="p">(</span><span class="s1">&#39;event_timestamp&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+
+<span class="w">            </span><span class="c1">-- ADDITIONAL OPTIMIZATION: Also filter on _loaded_at</span>
+<span class="w">            </span><span class="c1">-- This allows the query optimizer to prune partitions in the source</span>
+<span class="w">            </span><span class="c1">-- even if they&#39;re partitioned by load date, not event date</span>
+<span class="w">            </span><span class="k">AND</span><span class="w"> </span><span class="n">_loaded_at</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">DATEADD</span><span class="p">(</span><span class="k">day</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="k">CURRENT_DATE</span><span class="p">())</span>
+<span class="w">        </span><span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="n">endif</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+
+<span class="p">),</span>
+
+<span class="c1">-- Deduplicate within the batch</span>
+<span class="c1">-- Source data might have duplicates from pipeline retries</span>
+<span class="n">deduplicated</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+
+<span class="w">    </span><span class="k">SELECT</span>
+<span class="w">        </span><span class="o">*</span><span class="p">,</span>
+<span class="w">        </span><span class="n">ROW_NUMBER</span><span class="p">()</span><span class="w"> </span><span class="n">OVER</span><span class="w"> </span><span class="p">(</span>
+<span class="w">            </span><span class="n">PARTITION</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">event_id</span><span class="w"> </span>
+<span class="w">            </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">received_at</span><span class="w"> </span><span class="k">DESC</span><span class="w">  </span><span class="c1">-- Keep the most recently received version</span>
+<span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">_row_num</span>
+
+<span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">source_events</span>
+
+<span class="p">)</span>
+
+<span class="k">SELECT</span>
+<span class="w">    </span><span class="c1">-- Exclude the row number helper column from final output</span>
+<span class="w">    </span><span class="err">{{</span><span class="w"> </span><span class="n">dbt_utils</span><span class="p">.</span><span class="n">star</span><span class="p">(</span><span class="k">from</span><span class="o">=</span><span class="k">ref</span><span class="p">(</span><span class="s1">&#39;fct_clickstream_events&#39;</span><span class="p">),</span><span class="w"> </span><span class="k">except</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;_row_num&#39;</span><span class="p">])</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="k">replace</span><span class="p">(</span><span class="s1">&#39;fct_clickstream_events&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;deduplicated&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+<span class="w">    </span><span class="err">{</span><span class="o">#</span><span class="w"> </span>
+<span class="w">        </span><span class="n">NOTE</span><span class="p">:</span><span class="w"> </span><span class="n">The</span><span class="w"> </span><span class="n">above</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">hack</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="k">get</span><span class="w"> </span><span class="k">column</span><span class="w"> </span><span class="k">names</span><span class="p">.</span><span class="w"> </span><span class="k">In</span><span class="w"> </span><span class="n">practice</span><span class="p">,</span><span class="w"> </span><span class="n">just</span><span class="w"> </span><span class="n">list</span><span class="w"> </span><span class="n">them</span><span class="p">:</span>
+<span class="w">    </span><span class="o">#</span><span class="err">}</span>
+<span class="w">    </span><span class="n">event_id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">user_id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">anonymous_id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">event_type</span><span class="p">,</span>
+<span class="w">    </span><span class="n">event_timestamp</span><span class="p">,</span>
+<span class="w">    </span><span class="n">event_date</span><span class="p">,</span>
+<span class="w">    </span><span class="n">event_hour</span><span class="p">,</span>
+<span class="w">    </span><span class="n">page_url</span><span class="p">,</span>
+<span class="w">    </span><span class="n">page_domain</span><span class="p">,</span>
+<span class="w">    </span><span class="n">page_path</span><span class="p">,</span>
+<span class="w">    </span><span class="n">page_section</span><span class="p">,</span>
+<span class="w">    </span><span class="n">referrer_url</span><span class="p">,</span>
+<span class="w">    </span><span class="n">referrer_domain</span><span class="p">,</span>
+<span class="w">    </span><span class="n">device_type</span><span class="p">,</span>
+<span class="w">    </span><span class="n">browser</span><span class="p">,</span>
+<span class="w">    </span><span class="n">country_code</span><span class="p">,</span>
+<span class="w">    </span><span class="n">session_id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">product_id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">product_category</span><span class="p">,</span>
+<span class="w">    </span><span class="n">search_query</span><span class="p">,</span>
+<span class="w">    </span><span class="n">button_name</span><span class="p">,</span>
+<span class="w">    </span><span class="n">event_category</span><span class="p">,</span>
+<span class="w">    </span><span class="n">received_at</span><span class="p">,</span>
+<span class="w">    </span><span class="n">_loaded_at</span><span class="p">,</span>
+<span class="w">    </span><span class="n">processed_at</span>
+
+<span class="k">FROM</span><span class="w"> </span><span class="n">deduplicated</span>
+
+<span class="k">WHERE</span><span class="w"> </span><span class="n">_row_num</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+</code></pre></div>
+<h3 id="step-4-add-model-documentation-and-tests">Step 4: Add Model Documentation and Tests</h3>
+<p>Production models need documentation and tests. For incremental models, we add specific tests that catch common failure modes.</p>
+<p><strong>models/marts/clickstream/_clickstream__models.yml:</strong></p>
+<p>```yaml
+version: 2</p>
+<p>models:
+  - name: fct_clickstream_events
+    description: |
+      Processed clickstream events with parsed URLs, categorized event types,
+      and extracted properties. This is the primary fact table for user 
+      behavior analytics.</p>
+<div class="highlight"><pre><span></span><code>  **Incremental Strategy:** 
+  - Processes ~3 hours of lookback on each run
+  - Uses MERGE to handle late-arriving duplicates
+  - Full refresh required for schema changes or major backfills
+
+  **Typical Run Time:**
+  - Incremental: 8-15 minutes
+  - Full refresh: 4-6 hours
+
+  **Update Frequency:** Every 30 minutes via scheduled job
+
+config:
+  tags: [&#39;clickstream&#39;, &#39;incremental&#39;, &#39;tier_1&#39;]
+
+columns:
+  - name: event_id
+    description: &quot;Primary key - globally unique event identifier&quot;
+    tests:
+      - unique
+      - not_null
+
+  - name: event_timestamp
+    description: &quot;When the event occurred on the client&quot;
+    tests:
+      - not_null
+
+  - name: event_date
+    description: &quot;Date portion of event_timestamp, used for partitioning&quot;
+    tests:
+      - not_null
+
+  - name: event_category
+    description: &quot;High-level event grouping: pageview, interaction, conversion, commerce, media, other&quot;
+    tests:
+      - accepted_values:
+          values: [&#39;pageview&#39;, &#39;interaction&#39;, &#39;conversion&#39;, &#39;commerce&#39;, &#39;media&#39;, &#39;other&#39;]
+
+tests:
+  # Ensure incremental isn
+</code></pre></div>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

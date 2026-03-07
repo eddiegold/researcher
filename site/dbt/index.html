@@ -1,0 +1,1270 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Senior-engineer-level research on tools, frameworks, and infrastructure.">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="sources/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>dbt - Technical Overview - Tool Research</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#dbt-technical-overview" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Tool Research" class="md-header__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tool Research
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              dbt - Technical Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  DBT
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Tool Research" class="md-nav__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tool Research
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DBT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DBT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Is
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Concepts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#primary-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Use Cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Primary Use Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dimensional-modeling-data-marts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dimensional Modeling / Data Marts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-quality-enforcement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Quality Enforcement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation-and-lineage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation and Lineage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-parity-devstagingprod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Parity (Dev/Staging/Prod)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#senior-staff-engineer-highlights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Senior / Staff Engineer Highlights
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Senior / Staff Engineer Highlights">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-gotchas-failure-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Gotchas &amp; Failure Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-not-to-use-dbt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When NOT To Use dbt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-fits-into-a-broader-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Fits Into a Broader Stack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-scale-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance &amp; Scale Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-tradeoffs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Tradeoffs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/01_staging_layer_from_raw_sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Staging Layer From Raw Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/02_incremental_event_stream_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Event Stream Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/03_dimensional_model_star_schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dimensional Model Star Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/04_custom_macros_cross_db_compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Macros Cross Db Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/05_ci_cd_slim_deployments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ci Cd Slim Deployments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Is
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Concepts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#primary-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Use Cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Primary Use Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dimensional-modeling-data-marts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dimensional Modeling / Data Marts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-quality-enforcement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Quality Enforcement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation-and-lineage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation and Lineage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-parity-devstagingprod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Parity (Dev/Staging/Prod)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#senior-staff-engineer-highlights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Senior / Staff Engineer Highlights
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Senior / Staff Engineer Highlights">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-gotchas-failure-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Gotchas &amp; Failure Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-not-to-use-dbt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When NOT To Use dbt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-fits-into-a-broader-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Fits Into a Broader Stack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-scale-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance &amp; Scale Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-tradeoffs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Tradeoffs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="dbt-technical-overview">dbt — Technical Overview</h1>
+<h2 id="what-it-is">What It Is</h2>
+<p>dbt (data build tool) is a SQL-first transformation framework that executes the "T" in ELT pipelines. It compiles SQL models with Jinja templating into dependency-ordered DAGs, then executes them against your data warehouse. dbt is <strong>not</strong> an orchestrator, not an ingestion tool, and not a data warehouse—it's a transformation layer that sits between your loaded raw data and your analytics-ready tables. It provides version control semantics, testing primitives, and documentation generation for SQL transformations that previously lived in ad-hoc scripts or stored procedures. dbt Core is the open-source CLI; dbt Cloud adds a managed execution environment, IDE, and scheduling—this document focuses primarily on Core.</p>
+<h2 id="core-concepts">Core Concepts</h2>
+<p><strong>Models</strong> — SQL files containing a single <code>SELECT</code> statement. The filename becomes the resulting table/view name. Models reference other models via <code>{{ ref('model_name') }}</code>, which dbt uses to infer execution order. This is the fundamental unit of work.</p>
+<p><strong>Materializations</strong> — How dbt persists model output: <code>view</code> (default, always rebuilds), <code>table</code> (full refresh), <code>incremental</code> (append/merge based on predicate), <code>ephemeral</code> (inline CTE, no persistence). Choosing wrong materializations is the primary source of cost/performance issues.</p>
+<p><strong>Sources</strong> — Declarations of external tables (raw data loaded by other tools) via <code>{{ source('schema', 'table') }}</code>. Enables freshness checks and lineage tracking without dbt managing the underlying data.</p>
+<p><strong>Tests</strong> — Assertions executed post-model-build. Generic tests (<code>unique</code>, <code>not_null</code>, <code>accepted_values</code>, <code>relationships</code>) are YAML-configured; singular tests are standalone SQL returning failing rows. Tests are <strong>not</strong> unit tests—they validate data state, not transformation logic.</p>
+<p><strong>Macros</strong> — Jinja functions for reusable SQL patterns. Packages like <code>dbt-utils</code> provide common macros. Overuse creates unmaintainable Jinja spaghetti; underuse leads to copy-paste proliferation.</p>
+<p><strong>Profiles</strong> — Connection configuration stored in <code>~/.dbt/profiles.yml</code> (or env vars). Maps a profile name to warehouse credentials and target schemas. Separates environment config from project code.</p>
+<h2 id="primary-use-cases">Primary Use Cases</h2>
+<h3 id="dimensional-modeling-data-marts">Dimensional Modeling / Data Marts</h3>
+<ul>
+<li><strong>When to reach for it:</strong> Building star schemas, denormalized reporting tables, or semantic layers from normalized source data. dbt's ref-based DAG naturally expresses staging → intermediate → mart layering.</li>
+<li><strong>When NOT to reach for it:</strong> Real-time transformations or sub-second latency requirements. dbt is batch-oriented; even incremental models have meaningful overhead.</li>
+</ul>
+<h3 id="data-quality-enforcement">Data Quality Enforcement</h3>
+<ul>
+<li><strong>When to reach for it:</strong> Enforcing schema contracts (not_null, unique keys), referential integrity across models, and acceptable value ranges as part of CI/CD pipelines.</li>
+<li><strong>When NOT to reach for it:</strong> Complex statistical anomaly detection or ML-based quality checks. dbt tests are SQL predicates, not statistical engines. Use Monte Carlo, Great Expectations, or similar alongside dbt, not instead of dbt tests.</li>
+</ul>
+<h3 id="documentation-and-lineage">Documentation and Lineage</h3>
+<ul>
+<li><strong>When to reach for it:</strong> Auto-generating a browsable data catalog with column descriptions, model dependencies, and source freshness. <code>dbt docs generate &amp;&amp; dbt docs serve</code> produces a static site with full DAG visualization.</li>
+<li><strong>When NOT to reach for it:</strong> Enterprise data catalogs with governance workflows, PII tagging, or access control. dbt docs are read-only documentation, not a governance layer.</li>
+</ul>
+<h3 id="environment-parity-devstagingprod">Environment Parity (Dev/Staging/Prod)</h3>
+<ul>
+<li><strong>When to reach for it:</strong> Running identical transformation logic against different schemas/databases using target-based conditionals. Developers work in personal schemas; CI validates in staging; production runs on schedule.</li>
+<li><strong>When NOT to reach for it:</strong> Multi-tenant architectures where tenant isolation requires dynamic schema generation at scale. dbt's target system assumes a small number of environments, not thousands.</li>
+</ul>
+<h2 id="senior-staff-engineer-highlights">Senior / Staff Engineer Highlights</h2>
+<h3 id="production-gotchas-failure-modes">Production Gotchas &amp; Failure Modes</h3>
+<p><strong>1. Incremental models silently go stale.</strong> If your <code>is_incremental()</code> predicate references a column that gets backfilled or updated retroactively, you'll accumulate data drift. The model "succeeds" but produces wrong results. Always pair incrementals with periodic full refreshes or reconciliation tests.</p>
+<p><strong>2. <code>SELECT *</code> causes schema drift failures.</strong> When upstream sources add columns, models using <code>SELECT *</code> suddenly include unexpected fields. Downstream consumers break or, worse, silently ingest garbage. Explicitly enumerate columns in production models.</p>
+<p><strong>3. Single-model failures cascade unpredictably.</strong> dbt's default behavior stops downstream models when an upstream fails. Without proper <code>--fail-fast</code> or <code>--warn-error</code> configuration, partial runs create inconsistent warehouse state. Implement idempotent models and clear retry semantics.</p>
+<p><strong>4. Test failures don't block model materialization by default.</strong> <code>dbt build</code> runs tests after models but doesn't rollback on test failure. Your table is already written with bad data. Use <code>dbt test --store-failures</code> and implement alerting, or run tests in CI before deploying model changes.</p>
+<p><strong>5. Macro/package version drift across environments.</strong> Teams pin <code>dbt-utils</code> in <code>packages.yml</code> but forget to run <code>dbt deps</code> in CI or after updates. Different package versions produce different SQL compilation. Lock versions and include <code>dbt deps</code> in every CI run.</p>
+<p><strong>6. Incremental predicate scans entire table.</strong> The <code>WHERE</code> clause in incremental models often performs a full table scan to evaluate <code>max(updated_at)</code>. At scale, this subquery becomes the bottleneck. Use warehouse-specific optimizations (clustering keys, partition pruning) or maintain state externally.</p>
+<p><strong>7. Documentation rot.</strong> YAML descriptions fall out of sync with actual model logic because there's no enforcement. Descriptions say one thing; SQL does another. Treat doc strings as code—review them in PRs.</p>
+<h3 id="when-not-to-use-dbt">When NOT To Use dbt</h3>
+<p><strong>Real-time/streaming transformations:</strong> dbt is batch-only. For event-time processing, use Flink, Spark Structured Streaming, or Materialize. dbt's incremental models can achieve "near real-time" (minutes) but not seconds.</p>
+<p><strong>Heavy Python/ML transformations:</strong> dbt Python models exist but are second-class citizens with limited warehouse support and awkward debugging. Use Dagster, Airflow with Python operators, or dedicated ML pipelines for anything beyond simple pandas operations.</p>
+<p><strong>Complex orchestration logic:</strong> dbt has no native branching, conditional execution, or sensor-based triggers. Pair it with Airflow, Dagster, Prefect, or dbt Cloud's scheduling for production orchestration. Don't try to encode workflow logic in Jinja.</p>
+<p><strong>Multi-warehouse joins:</strong> dbt targets a single warehouse per run. Cross-database transformations require federation layers (Trino, Starburst) or pre-landing data into a single warehouse.</p>
+<p><strong>Sub-second query serving:</strong> dbt outputs are tables/views for analytics workloads. For low-latency API backends, use a serving layer (Redis, Druid, Pinot) fed by dbt outputs, not dbt itself.</p>
+<h3 id="how-it-fits-into-a-broader-stack">How It Fits Into a Broader Stack</h3>
+<div class="highlight"><pre><span></span><code>┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Sources   │────▶│   Ingestion │────▶│     dbt     │────▶│  Consumers  │
+│ (APIs, DBs, │     │ (Fivetran,  │     │  (Transform)│     │ (BI, ML,    │
+│  files)     │     │  Airbyte,   │     │             │     │  Reverse    │
+│             │     │  Stitch)    │     │             │     │  ETL)       │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+                           │                   │
+                           ▼                   ▼
+                    ┌─────────────┐     ┌─────────────┐
+                    │  Warehouse  │     │ Orchestrator│
+                    │ (Snowflake, │     │ (Airflow,   │
+                    │  BigQuery,  │     │  Dagster,   │
+                    │  Redshift,  │     │  dbt Cloud) │
+                    │  Databricks)│     └─────────────┘
+                    └─────────────┘
+</code></pre></div>
+<p><strong>Upstream:</strong> dbt consumes from ingestion tools (Fivetran, Airbyte, custom loaders) that land raw data into staging schemas. Define these as <code>sources</code> in dbt for freshness monitoring.</p>
+<p><strong>Downstream:</strong> BI tools (Looker, Tableau, Metabase) query dbt-produced marts. Reverse ETL tools (Census, Hightouch) sync aggregates back to operational systems. ML pipelines read feature tables dbt materializes.</p>
+<p><strong>Orchestration:</strong> Production dbt runs are triggered by Airflow DAGs, Dagster assets, Prefect flows, or dbt Cloud schedules. dbt provides the transformation graph; orchestrators handle scheduling, retries, and cross-system dependencies.</p>
+<h3 id="performance-scale-considerations">Performance &amp; Scale Considerations</h3>
+<p><strong>What breaks first:</strong> Incremental model predicate queries. As tables grow, the <code>WHERE updated_at &gt; (SELECT max(...))</code> pattern scans increasing data volumes. Symptoms: linearly increasing run times, warehouse timeout errors.</p>
+<p><strong>Detection:</strong> Monitor model execution times in dbt artifacts (<code>run_results.json</code>) or dbt Cloud. Alert on models exceeding historical p95 duration.</p>
+<p><strong>Tuning levers:</strong>
+- <strong>Partition pruning:</strong> Align incremental predicates with warehouse partition columns. BigQuery partitioned tables, Snowflake clustering keys, Redshift sort keys.
+- <strong>Incremental predicates config:</strong> Use <code>incremental_predicates</code> (dbt 1.5+) to push filters to the merge statement, avoiding full scans.
+- <strong>Parallelism:</strong> <code>--threads</code> flag controls concurrent model execution. Warehouse concurrency limits determine ceiling.
+- <strong>Defer to prod:</strong> <code>--defer --state</code> flags skip unchanged models by comparing manifest artifacts. Essential for CI performance.</p>
+<p><strong>Warehouse-specific limits:</strong>
+- <strong>BigQuery:</strong> Slot contention under high concurrency; DML quotas on incremental merges.
+- <strong>Snowflake:</strong> Warehouse auto-suspend can cause cold-start latency; micro-partitions affect clustering overhead.
+- <strong>Redshift:</strong> Concurrent write limits; vacuum/analyze overhead on frequently updated tables.</p>
+<p><strong>At scale (thousands of models):</strong> DAG compilation itself becomes slow (minutes for very large projects). Split into multiple dbt projects with cross-project refs, or use dbt mesh architecture with project dependencies.</p>
+<h2 id="key-tradeoffs">Key Tradeoffs</h2>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Advantage</th>
+<th>Disadvantage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SQL-first</strong></td>
+<td>Analysts can contribute; leverages warehouse compute</td>
+<td>Complex logic requires Jinja gymnastics; Python models are bolted-on</td>
+</tr>
+<tr>
+<td><strong>Ref-based DAG</strong></td>
+<td>Automatic dependency resolution; no manual ordering</td>
+<td>Refactoring model names requires updating all downstream refs</td>
+</tr>
+<tr>
+<td><strong>Immutable runs</strong></td>
+<td>Reproducible builds via manifest/run artifacts</td>
+<td>No native state management; incremental models require external tracking for recovery</td>
+</tr>
+<tr>
+<td><strong>Testing as SQL</strong></td>
+<td>Easy to write; executes on warehouse</td>
+<td>Not unit tests; can't mock inputs; validates data, not logic</td>
+</tr>
+<tr>
+<td><strong>Open-source core</strong></td>
+<td>Full control; no vendor lock-in</td>
+<td>Production features (CI, scheduling, IDE) require dbt Cloud or self-built tooling</td>
+</tr>
+</tbody>
+</table>
+<h2 id="quick-reference">Quick Reference</h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Environment setup</span>
+dbt<span class="w"> </span>deps<span class="w">                          </span><span class="c1"># Install packages from packages.yml</span>
+dbt<span class="w"> </span>debug<span class="w">                         </span><span class="c1"># Validate connection and project config</span>
+
+<span class="c1"># Development workflow</span>
+dbt<span class="w"> </span>compile<span class="w">                       </span><span class="c1"># Generate compiled SQL without execution</span>
+dbt<span class="w"> </span>run<span class="w"> </span>--select<span class="w"> </span>my_model<span class="w">         </span><span class="c1"># Run single model</span>
+dbt<span class="w"> </span>run<span class="w"> </span>--select<span class="w"> </span>my_model+<span class="w">        </span><span class="c1"># Run model and all downstream</span>
+dbt<span class="w"> </span>run<span class="w"> </span>--select<span class="w"> </span>+my_model<span class="w">        </span><span class="c1"># Run model and all upstream</span>
+dbt<span class="w"> </span>run<span class="w"> </span>--select<span class="w"> </span>tag:nightly<span class="w">      </span><span class="c1"># Run models with specific tag</span>
+dbt<span class="w"> </span>run<span class="w"> </span>--exclude<span class="w"> </span>staging.*<span class="w">       </span><span class="c1"># Run all except staging models</span>
+
+<span class="c1"># Incremental operations</span>
+dbt<span class="w"> </span>run<span class="w"> </span>--select<span class="w"> </span>my_model<span class="w"> </span>--full-refresh<span class="w">  </span><span class="c1"># Force full rebuild of incremental</span>
+
+<span class="c1"># Testing</span>
+dbt<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--select<span class="w"> </span>my_model<span class="w">        </span><span class="c1"># Run tests for specific model</span>
+dbt<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--select<span class="w"> </span>source:raw.*<span class="w">    </span><span class="c1"># Run source freshness and tests</span>
+dbt<span class="w"> </span>build<span class="w"> </span>--select<span class="w"> </span>my_model<span class="w">       </span><span class="c1"># Run + test in dependency order</span>
+
+<span class="c1"># CI/CD patterns</span>
+dbt<span class="w"> </span>run<span class="w"> </span>--defer<span class="w"> </span>--state<span class="w"> </span>./prod-artifacts<span class="w"> </span>--select<span class="w"> </span>state:modified+
+dbt<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--defer<span class="w"> </span>--state<span class="w"> </span>./prod-artifacts<span class="w"> </span>--select<span class="w"> </span>state:modified+
+
+<span class="c1"># Documentation</span>
+dbt<span class="w"> </span>docs<span class="w"> </span>generate<span class="w">                 </span><span class="c1"># Build documentation site</span>
+dbt<span class="w"> </span>docs<span class="w"> </span>serve<span class="w">                    </span><span class="c1"># Local preview on port 8080</span>
+
+<span class="c1"># Debugging</span>
+dbt<span class="w"> </span>ls<span class="w"> </span>--select<span class="w"> </span>my_model<span class="w">          </span><span class="c1"># List models matching selector</span>
+dbt<span class="w"> </span>ls<span class="w"> </span>--resource-type<span class="w"> </span><span class="nb">test</span><span class="w">       </span><span class="c1"># List all tests</span>
+dbt<span class="w"> </span>show<span class="w"> </span>--select<span class="w"> </span>my_model<span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span><span class="w">  </span><span class="c1"># Preview model output (dbt 1.5+)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Common model config patterns (schema.yml)</span>
+<span class="nt">models</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dim_customers</span>
+<span class="w">    </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">materialized</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">table</span>
+<span class="w">      </span><span class="nt">tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;nightly&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;core&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">columns</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">customer_id</span>
+<span class="w">        </span><span class="nt">tests</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unique</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">not_null</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">status</span>
+<span class="w">        </span><span class="nt">tests</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">accepted_values</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;active&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;churned&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;pending&#39;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Incremental model pattern</span>
+<span class="err">{{</span><span class="w"> </span><span class="n">config</span><span class="p">(</span>
+<span class="w">    </span><span class="n">materialized</span><span class="o">=</span><span class="s1">&#39;incremental&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">unique_key</span><span class="o">=</span><span class="s1">&#39;event_id&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">incremental_strategy</span><span class="o">=</span><span class="s1">&#39;merge&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">on_schema_change</span><span class="o">=</span><span class="s1">&#39;append_new_columns&#39;</span>
+<span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+
+<span class="k">SELECT</span>
+<span class="w">    </span><span class="n">event_id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">user_id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">event_timestamp</span><span class="p">,</span>
+<span class="w">    </span><span class="n">event_type</span>
+<span class="k">FROM</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">source</span><span class="p">(</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;events&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+
+<span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">is_incremental</span><span class="p">()</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">event_timestamp</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="k">max</span><span class="p">(</span><span class="n">event_timestamp</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="n">this</span><span class="w"> </span><span class="err">}}</span><span class="p">)</span>
+<span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="n">endif</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+</code></pre></div>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
