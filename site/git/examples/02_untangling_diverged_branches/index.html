@@ -1,0 +1,1787 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Senior-engineer-level research on tools, frameworks, and infrastructure.">
+      
+      
+      
+      
+        <link rel="prev" href="../01_surgical_history_rewrite/">
+      
+      
+        <link rel="next" href="../03_bisect_regression_hunting/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Untangling Diverged Branches After Force Push - Tool Research</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#untangling-diverged-branches-after-force-push" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Tool Research" class="md-header__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tool Research
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Untangling Diverged Branches After Force Push
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../dbt/" class="md-tabs__link">
+          
+  
+  
+  DBT
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  GIT
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Tool Research" class="md-nav__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tool Research
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DBT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DBT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/01_staging_layer_from_raw_sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Staging Layer From Raw Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/02_incremental_event_stream_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Event Stream Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/03_dimensional_model_star_schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dimensional Model Star Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/04_custom_macros_cross_db_compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Macros Cross Db Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/05_ci_cd_slim_deployments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ci Cd Slim Deployments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    GIT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_surgical_history_rewrite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Surgical History Rewrite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Untangling Diverged Branches
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Untangling Diverged Branches
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-set-up-a-realistic-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Set Up a Realistic Scenario
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-experience-the-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Experience the Divergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-diagnose-the-situation-with-reflog-archaeology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Diagnose the Situation with Reflog Archaeology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-identify-your-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Identify Your Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-find-the-original-base-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Find the Original Base Commit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-reset-and-cherry-pick-your-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Reset and Cherry-Pick Your Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-verify-the-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Verify the Recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-8-push-your-recovered-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Push Your Recovered Work
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running It
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-to-watch-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What To Watch For
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What To Watch For">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-cherry-pick-conflicts-from-overlapping-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Cherry-Pick Conflicts from Overlapping Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-reflog-expiration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Reflog Expiration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_bisect_regression_hunting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bisect Regression Hunting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_monorepo_subtree_extraction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monorepo Subtree Extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_worktree_parallel_development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worktree Parallel Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-set-up-a-realistic-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Set Up a Realistic Scenario
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-experience-the-divergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Experience the Divergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-diagnose-the-situation-with-reflog-archaeology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Diagnose the Situation with Reflog Archaeology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-identify-your-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Identify Your Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-find-the-original-base-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Find the Original Base Commit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-reset-and-cherry-pick-your-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Reset and Cherry-Pick Your Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-verify-the-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Verify the Recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-8-push-your-recovered-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Push Your Recovered Work
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running It
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-to-watch-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What To Watch For
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What To Watch For">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-cherry-pick-conflicts-from-overlapping-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Cherry-Pick Conflicts from Overlapping Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-reflog-expiration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Reflog Expiration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="untangling-diverged-branches-after-force-push">Untangling Diverged Branches After Force Push</h1>
+<h2 id="overview">Overview</h2>
+<p>Force pushes happen. Sometimes intentionally (rebasing a feature branch before merge), sometimes accidentally (a junior engineer ran the wrong command), and sometimes necessarily (removing sensitive data from history). When a teammate force-pushes to a branch you've been working on, Git will tell you that your local branch has "diverged" from the remote—leaving you with commits that exist only locally and a remote history that no longer shares a common ancestor with your work.</p>
+<p>This walkthrough demonstrates how to:
+1. Diagnose exactly what happened using Git's reflog
+2. Identify which commits are "yours" versus which were on the old remote
+3. Recover your work by cherry-picking onto the new remote state
+4. Understand the relationship between remote-tracking branches and local refs</p>
+<p>This is essential knowledge for any team using Git collaboratively, especially teams that rebase feature branches or maintain long-running branches with multiple contributors.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Git 2.20+ installed</li>
+<li>Basic understanding of Git commits, branches, and remotes</li>
+<li>Familiarity with <code>git log</code> and reading commit hashes</li>
+<li>A terminal with Git configured (user.name, user.email set)</li>
+<li>Understanding that commits are immutable snapshots identified by SHA-1 hashes</li>
+</ul>
+<p>To verify your Git version:
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>--version
+<span class="c1"># Should output: git version 2.20.0 or higher</span>
+</code></pre></div></p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="step-1-set-up-a-realistic-scenario">Step 1: Set Up a Realistic Scenario</h3>
+<p>Let's simulate the exact situation you'd encounter in production. We'll create a repository with a shared feature branch, simulate a teammate's force push, and then your local commits that are now orphaned.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a bare repository to simulate a remote (like GitHub/GitLab)</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span>~/git-recovery-demo/origin.git
+<span class="nb">cd</span><span class="w"> </span>~/git-recovery-demo/origin.git
+git<span class="w"> </span>init<span class="w"> </span>--bare
+
+<span class="c1"># Clone it as &quot;teammate&quot; (simulating your colleague)</span>
+<span class="nb">cd</span><span class="w"> </span>~/git-recovery-demo
+git<span class="w"> </span>clone<span class="w"> </span>origin.git<span class="w"> </span>teammate-checkout
+<span class="nb">cd</span><span class="w"> </span>teammate-checkout
+git<span class="w"> </span>config<span class="w"> </span>user.name<span class="w"> </span><span class="s2">&quot;Alex Teammate&quot;</span>
+git<span class="w"> </span>config<span class="w"> </span>user.email<span class="w"> </span><span class="s2">&quot;alex@company.com&quot;</span>
+
+<span class="c1"># Create initial project structure</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span>src/services
+cat<span class="w"> </span>&gt;<span class="w"> </span>src/services/payment_processor.py<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">class PaymentProcessor:</span>
+<span class="s">    def __init__(self, gateway_client):</span>
+<span class="s">        self.gateway = gateway_client</span>
+<span class="s">        self.retry_count = 3</span>
+
+<span class="s">    def process_charge(self, amount_cents, customer_id):</span>
+<span class="s">        &quot;&quot;&quot;Process a payment charge.&quot;&quot;&quot;</span>
+<span class="s">        if amount_cents &lt;= 0:</span>
+<span class="s">            raise ValueError(&quot;Amount must be positive&quot;)</span>
+<span class="s">        return self.gateway.charge(amount_cents, customer_id)</span>
+<span class="s">EOF</span>
+
+git<span class="w"> </span>add<span class="w"> </span>.
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat(payments): add initial PaymentProcessor class&quot;</span>
+
+<span class="c1"># Create feature branch for payment refunds</span>
+git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/payment-refunds
+cat<span class="w"> </span>&gt;&gt;<span class="w"> </span>src/services/payment_processor.py<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+
+<span class="s">    def process_refund(self, charge_id, amount_cents=None):</span>
+<span class="s">        &quot;&quot;&quot;Process a full or partial refund.&quot;&quot;&quot;</span>
+<span class="s">        return self.gateway.refund(charge_id, amount_cents)</span>
+<span class="s">EOF</span>
+
+git<span class="w"> </span>add<span class="w"> </span>.
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat(payments): add basic refund method&quot;</span>
+
+<span class="c1"># Push both branches to origin</span>
+git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span>main
+git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span>feature/payment-refunds
+</code></pre></div>
+<p>Now let's set up your local checkout:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Clone as &quot;you&quot; (your local development environment)</span>
+<span class="nb">cd</span><span class="w"> </span>~/git-recovery-demo
+git<span class="w"> </span>clone<span class="w"> </span>origin.git<span class="w"> </span>my-checkout
+<span class="nb">cd</span><span class="w"> </span>my-checkout
+git<span class="w"> </span>config<span class="w"> </span>user.name<span class="w"> </span><span class="s2">&quot;Your Name&quot;</span>
+git<span class="w"> </span>config<span class="w"> </span>user.email<span class="w"> </span><span class="s2">&quot;you@company.com&quot;</span>
+
+<span class="c1"># Checkout the feature branch and add your commits</span>
+git<span class="w"> </span>checkout<span class="w"> </span>feature/payment-refunds
+
+<span class="c1"># Your first commit: add validation logic</span>
+cat<span class="w"> </span>&gt;<span class="w"> </span>src/services/payment_processor.py<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">class PaymentProcessor:</span>
+<span class="s">    def __init__(self, gateway_client):</span>
+<span class="s">        self.gateway = gateway_client</span>
+<span class="s">        self.retry_count = 3</span>
+<span class="s">        self.max_refund_cents = 100000  # $1000 limit for auto-approval</span>
+
+<span class="s">    def process_charge(self, amount_cents, customer_id):</span>
+<span class="s">        &quot;&quot;&quot;Process a payment charge.&quot;&quot;&quot;</span>
+<span class="s">        if amount_cents &lt;= 0:</span>
+<span class="s">            raise ValueError(&quot;Amount must be positive&quot;)</span>
+<span class="s">        return self.gateway.charge(amount_cents, customer_id)</span>
+
+<span class="s">    def process_refund(self, charge_id, amount_cents=None):</span>
+<span class="s">        &quot;&quot;&quot;Process a full or partial refund.&quot;&quot;&quot;</span>
+<span class="s">        if amount_cents and amount_cents &gt; self.max_refund_cents:</span>
+<span class="s">            raise ValueError(&quot;Refund exceeds auto-approval limit&quot;)</span>
+<span class="s">        return self.gateway.refund(charge_id, amount_cents)</span>
+<span class="s">EOF</span>
+
+git<span class="w"> </span>add<span class="w"> </span>.
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat(payments): add refund amount validation&quot;</span>
+
+<span class="c1"># Your second commit: add logging</span>
+cat<span class="w"> </span>&gt;<span class="w"> </span>src/services/payment_processor.py<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">import logging</span>
+
+<span class="s">logger = logging.getLogger(__name__)</span>
+
+<span class="s">class PaymentProcessor:</span>
+<span class="s">    def __init__(self, gateway_client):</span>
+<span class="s">        self.gateway = gateway_client</span>
+<span class="s">        self.retry_count = 3</span>
+<span class="s">        self.max_refund_cents = 100000  # $1000 limit for auto-approval</span>
+
+<span class="s">    def process_charge(self, amount_cents, customer_id):</span>
+<span class="s">        &quot;&quot;&quot;Process a payment charge.&quot;&quot;&quot;</span>
+<span class="s">        logger.info(f&quot;Processing charge: {amount_cents} cents for customer {customer_id}&quot;)</span>
+<span class="s">        if amount_cents &lt;= 0:</span>
+<span class="s">            raise ValueError(&quot;Amount must be positive&quot;)</span>
+<span class="s">        return self.gateway.charge(amount_cents, customer_id)</span>
+
+<span class="s">    def process_refund(self, charge_id, amount_cents=None):</span>
+<span class="s">        &quot;&quot;&quot;Process a full or partial refund.&quot;&quot;&quot;</span>
+<span class="s">        logger.info(f&quot;Processing refund for charge {charge_id}&quot;)</span>
+<span class="s">        if amount_cents and amount_cents &gt; self.max_refund_cents:</span>
+<span class="s">            raise ValueError(&quot;Refund exceeds auto-approval limit&quot;)</span>
+<span class="s">        return self.gateway.refund(charge_id, amount_cents)</span>
+<span class="s">EOF</span>
+
+git<span class="w"> </span>add<span class="w"> </span>.
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat(payments): add structured logging to payment operations&quot;</span>
+</code></pre></div>
+<p>Now simulate your teammate rebasing and force-pushing:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Switch to teammate&#39;s checkout</span>
+<span class="nb">cd</span><span class="w"> </span>~/git-recovery-demo/teammate-checkout
+git<span class="w"> </span>checkout<span class="w"> </span>feature/payment-refunds
+
+<span class="c1"># Teammate decides to rebase onto latest main and rewrite the refund commit</span>
+git<span class="w"> </span>fetch<span class="w"> </span>origin
+git<span class="w"> </span>rebase<span class="w"> </span>origin/main
+
+<span class="c1"># Teammate rewrites the refund method (different implementation than original)</span>
+cat<span class="w"> </span>&gt;<span class="w"> </span>src/services/payment_processor.py<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">class PaymentProcessor:</span>
+<span class="s">    def __init__(self, gateway_client, config=None):</span>
+<span class="s">        self.gateway = gateway_client</span>
+<span class="s">        self.retry_count = 3</span>
+<span class="s">        self.config = config or {}</span>
+
+<span class="s">    def process_charge(self, amount_cents, customer_id):</span>
+<span class="s">        &quot;&quot;&quot;Process a payment charge.&quot;&quot;&quot;</span>
+<span class="s">        if amount_cents &lt;= 0:</span>
+<span class="s">            raise ValueError(&quot;Amount must be positive&quot;)</span>
+<span class="s">        return self.gateway.charge(amount_cents, customer_id)</span>
+
+<span class="s">    def process_refund(self, charge_id, amount_cents=None, reason=None):</span>
+<span class="s">        &quot;&quot;&quot;Process a full or partial refund with optional reason tracking.&quot;&quot;&quot;</span>
+<span class="s">        metadata = {&quot;reason&quot;: reason} if reason else {}</span>
+<span class="s">        return self.gateway.refund(charge_id, amount_cents, metadata=metadata)</span>
+<span class="s">EOF</span>
+
+git<span class="w"> </span>add<span class="w"> </span>.
+git<span class="w"> </span>commit<span class="w"> </span>--amend<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat(payments): add refund method with reason tracking&quot;</span>
+
+<span class="c1"># Force push the rewritten history</span>
+git<span class="w"> </span>push<span class="w"> </span>--force<span class="w"> </span>origin<span class="w"> </span>feature/payment-refunds
+</code></pre></div>
+<h3 id="step-2-experience-the-divergence">Step 2: Experience the Divergence</h3>
+<p>Return to your checkout and try to fetch:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>~/git-recovery-demo/my-checkout
+git<span class="w"> </span>fetch<span class="w"> </span>origin
+</code></pre></div>
+<p>Now check the status:</p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>status
+</code></pre></div>
+<p>You'll see something like:
+<div class="highlight"><pre><span></span><code>On branch feature/payment-refunds
+Your branch and &#39;origin/feature/payment-refunds&#39; have diverged,
+and have 3 and 1 different commits each, respectively.
+  (use &quot;git pull&quot; to merge the remote branch into yours)
+</code></pre></div></p>
+<p><strong>Do not run <code>git pull</code> yet.</strong> This would create a merge commit combining both histories, which is rarely what you want. Let's understand what actually happened first.</p>
+<h3 id="step-3-diagnose-the-situation-with-reflog-archaeology">Step 3: Diagnose the Situation with Reflog Archaeology</h3>
+<p>The reflog is Git's safety net—it records every change to branch tips, even ones that would otherwise be lost. Let's examine what happened:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># See the history of where origin/feature/payment-refunds has pointed</span>
+git<span class="w"> </span>reflog<span class="w"> </span>show<span class="w"> </span>origin/feature/payment-refunds
+</code></pre></div>
+<p>Output will look like:
+<div class="highlight"><pre><span></span><code>a1b2c3d origin/feature/payment-refunds@{0}: fetch origin: forced-update
+e4f5g6h origin/feature/payment-refunds@{1}: fetch origin: fast-forward
+</code></pre></div></p>
+<p>The key insight: <code>forced-update</code> tells you the remote-tracking branch was updated in a way that wasn't a fast-forward. The old commit <code>e4f5g6h</code> is the commit your work was based on.</p>
+<p>Now let's visualize the divergence:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Show commits unique to your local branch (not in remote)</span>
+git<span class="w"> </span>log<span class="w"> </span>origin/feature/payment-refunds..HEAD<span class="w"> </span>--oneline
+
+<span class="c1"># Show commits unique to remote (not in your local branch)  </span>
+git<span class="w"> </span>log<span class="w"> </span>HEAD..origin/feature/payment-refunds<span class="w"> </span>--oneline
+
+<span class="c1"># See both sides together with graph</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>--graph<span class="w"> </span>--all<span class="w"> </span>--decorate
+</code></pre></div>
+<h3 id="step-4-identify-your-commits">Step 4: Identify Your Commits</h3>
+<p>Before recovering, you need to know exactly which commits contain your work:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># List your commits with full details</span>
+git<span class="w"> </span>log<span class="w"> </span>origin/feature/payment-refunds..HEAD<span class="w"> </span>--format<span class="o">=</span><span class="s2">&quot;%H %an %s&quot;</span>
+</code></pre></div>
+<p>You should see your two commits:
+<div class="highlight"><pre><span></span><code>abc123... Your Name feat(payments): add structured logging to payment operations
+def456... Your Name feat(payments): add refund amount validation
+</code></pre></div></p>
+<p>Save these hashes—you'll need them:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Store the commit range for your work</span>
+<span class="nv">YOUR_COMMITS</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>log<span class="w"> </span>origin/feature/payment-refunds..HEAD<span class="w"> </span>--format<span class="o">=</span><span class="s2">&quot;%H&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tac<span class="k">)</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Your commits to recover:&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$YOUR_COMMITS</span><span class="s2">&quot;</span>
+</code></pre></div>
+<p>The <code>tac</code> reverses the order so the oldest commit is first (important for cherry-pick order).</p>
+<h3 id="step-5-find-the-original-base-commit">Step 5: Find the Original Base Commit</h3>
+<p>To understand what changed, find the last common ancestor:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># This shows where your branch originally diverged from the old remote</span>
+git<span class="w"> </span>merge-base<span class="w"> </span>HEAD<span class="w"> </span>origin/feature/payment-refunds@<span class="o">{</span><span class="m">1</span><span class="o">}</span>
+</code></pre></div>
+<p>You can also examine the old remote state before the force push:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># See what the remote looked like before the force push</span>
+git<span class="w"> </span>log<span class="w"> </span>origin/feature/payment-refunds@<span class="o">{</span><span class="m">1</span><span class="o">}</span><span class="w"> </span>--oneline<span class="w"> </span>-5
+</code></pre></div>
+<h3 id="step-6-reset-and-cherry-pick-your-commits">Step 6: Reset and Cherry-Pick Your Commits</h3>
+<p>Now for the recovery. We'll reset to the new remote state and replay your commits:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># First, create a backup branch in case something goes wrong</span>
+git<span class="w"> </span>branch<span class="w"> </span>backup/my-payment-work<span class="w"> </span>HEAD
+
+<span class="c1"># Reset your local branch to match the new remote state</span>
+git<span class="w"> </span>reset<span class="w"> </span>--hard<span class="w"> </span>origin/feature/payment-refunds
+
+<span class="c1"># Verify you&#39;re now at the remote&#39;s commit</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>-3
+</code></pre></div>
+<p>Now cherry-pick your commits onto the new base:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Cherry-pick each of your commits in order</span>
+<span class="c1"># We stored them oldest-first, so this applies them correctly</span>
+<span class="k">for</span><span class="w"> </span>commit<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nv">$YOUR_COMMITS</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Cherry-picking: </span><span class="nv">$commit</span><span class="s2">&quot;</span>
+<span class="w">    </span>git<span class="w"> </span>cherry-pick<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$commit</span><span class="s2">&quot;</span>
+<span class="k">done</span>
+</code></pre></div>
+<p>If you encounter conflicts during cherry-pick:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Git will stop and show you the conflict</span>
+<span class="c1"># Edit the file to resolve, then:</span>
+git<span class="w"> </span>add<span class="w"> </span>src/services/payment_processor.py
+git<span class="w"> </span>cherry-pick<span class="w"> </span>--continue
+
+<span class="c1"># Or if a commit is no longer relevant (perhaps the teammate included similar changes):</span>
+git<span class="w"> </span>cherry-pick<span class="w"> </span>--skip
+</code></pre></div>
+<h3 id="step-7-verify-the-recovery">Step 7: Verify the Recovery</h3>
+<p>Confirm your commits are now on top of the teammate's changes:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># See the complete history</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>-10
+
+<span class="c1"># Verify the file contains both your teammate&#39;s changes AND your changes</span>
+cat<span class="w"> </span>src/services/payment_processor.py
+
+<span class="c1"># Confirm you&#39;re ahead of remote (ready to push)</span>
+git<span class="w"> </span>status
+</code></pre></div>
+<p>The status should show:
+<div class="highlight"><pre><span></span><code>Your branch is ahead of &#39;origin/feature/payment-refunds&#39; by 2 commits.
+</code></pre></div></p>
+<h3 id="step-8-push-your-recovered-work">Step 8: Push Your Recovered Work</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Push your commits on top of the teammate&#39;s work</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feature/payment-refunds
+
+<span class="c1"># Clean up the backup branch</span>
+git<span class="w"> </span>branch<span class="w"> </span>-d<span class="w"> </span>backup/my-payment-work
+</code></pre></div>
+<h2 id="running-it">Running It</h2>
+<p>Execute the complete demo end-to-end:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
+<span class="c1"># save as: run_demo.sh</span>
+
+<span class="nb">set</span><span class="w"> </span>-e<span class="w">  </span><span class="c1"># Exit on any error</span>
+
+<span class="nv">DEMO_DIR</span><span class="o">=</span>~/git-recovery-demo
+
+<span class="c1"># Clean up any previous run</span>
+rm<span class="w"> </span>-rf<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DEMO_DIR</span><span class="s2">&quot;</span>
+
+<span class="c1"># Run all setup steps</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== Setting up demo repositories ===&quot;</span>
+<span class="c1"># [Insert all commands from Steps 1-2 here]</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== Demonstrating recovery ===&quot;</span>
+<span class="nb">cd</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DEMO_DIR</span><span class="s2">/my-checkout&quot;</span>
+
+<span class="c1"># Diagnose</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Commits to recover:&quot;</span>
+git<span class="w"> </span>log<span class="w"> </span>origin/feature/payment-refunds..HEAD<span class="w"> </span>--oneline
+
+<span class="c1"># Backup</span>
+git<span class="w"> </span>branch<span class="w"> </span>backup/my-payment-work<span class="w"> </span>HEAD
+
+<span class="c1"># Store commits</span>
+<span class="nv">YOUR_COMMITS</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>log<span class="w"> </span>origin/feature/payment-refunds..HEAD<span class="w"> </span>--format<span class="o">=</span><span class="s2">&quot;%H&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tac<span class="k">)</span>
+
+<span class="c1"># Reset and cherry-pick</span>
+git<span class="w"> </span>reset<span class="w"> </span>--hard<span class="w"> </span>origin/feature/payment-refunds
+
+<span class="k">for</span><span class="w"> </span>commit<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nv">$YOUR_COMMITS</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span>git<span class="w"> </span>cherry-pick<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$commit</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Conflict in </span><span class="nv">$commit</span><span class="s2"> - resolve manually&quot;</span>
+<span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="k">done</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== Recovery complete ===&quot;</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>-5
+</code></pre></div>
+<h2 id="what-to-watch-for">What To Watch For</h2>
+<h3 id="1-cherry-pick-conflicts-from-overlapping-changes">1. Cherry-Pick Conflicts from Overlapping Changes</h3>
+<p>If your teammate's rewritten commits touch the same lines you modified, you'll hit conflicts. When resolving:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># See what both sides changed</span>
+git<span class="w"> </span>diff<span class="w"> </span>--ours<span class="w">    </span><span class="c1"># Your changes</span>
+git<span class="w"> </span>diff<span class="w"> </span>--theirs<span class="w">  </span><span class="c1"># Their changes</span>
+
+<span class="c1"># After resolving</span>
+git<span class="w"> </span>add<span class="w"> </span>&lt;file&gt;
+git<span class="w"> </span>cherry-pick<span class="w"> </span>--continue
+</code></pre></div>
+<p>Don't blindly accept one side—the conflict exists because both changes matter.</p>
+<h3 id="2-reflog-expiration">2. Reflog Expiration</h3>
+<p>Reflog entries expire (default: 90 days for reachable commits, 30 days for unreachable). If significant time has passed since the force push:</p>
+<p>```bash</p>
+<h1 id="check-if-the-old-ref-still-exists">Check if the old ref still exists</h1>
+<p>git reflog show origin/feature/payment-refunds</p>
+<h1 id="if-not-check-if-the-commit">If not, check if the commit</h1>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

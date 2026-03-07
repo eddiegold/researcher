@@ -29,3 +29,12 @@ nav:
     - Dimensional Model Star Schema: dbt/examples/03_dimensional_model_star_schema.md
     - Custom Macros Cross Db Compatibility: dbt/examples/04_custom_macros_cross_db_compatibility.md
     - Ci Cd Slim Deployments: dbt/examples/05_ci_cd_slim_deployments.md
+- GIT:
+  - Overview: git/index.md
+  - Sources: git/sources.md
+  - Examples:
+    - Surgical History Rewrite: git/examples/01_surgical_history_rewrite.md
+    - Untangling Diverged Branches: git/examples/02_untangling_diverged_branches.md
+    - Bisect Regression Hunting: git/examples/03_bisect_regression_hunting.md
+    - Monorepo Subtree Extraction: git/examples/04_monorepo_subtree_extraction.md
+    - Worktree Parallel Development: git/examples/05_worktree_parallel_development.md

@@ -1,0 +1,1614 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Senior-engineer-level research on tools, frameworks, and infrastructure.">
+      
+      
+      
+      
+        <link rel="prev" href="../02_untangling_diverged_branches/">
+      
+      
+        <link rel="next" href="../04_monorepo_subtree_extraction/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Automated Regression Hunting with Git Bisect - Tool Research</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#automated-regression-hunting-with-git-bisect" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Tool Research" class="md-header__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tool Research
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Automated Regression Hunting with Git Bisect
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../dbt/" class="md-tabs__link">
+          
+  
+  
+  DBT
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  GIT
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Tool Research" class="md-nav__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tool Research
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DBT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DBT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/01_staging_layer_from_raw_sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Staging Layer From Raw Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/02_incremental_event_stream_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Event Stream Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/03_dimensional_model_star_schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dimensional Model Star Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/04_custom_macros_cross_db_compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Macros Cross Db Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dbt/examples/05_ci_cd_slim_deployments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ci Cd Slim Deployments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    GIT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_surgical_history_rewrite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Surgical History Rewrite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_untangling_diverged_branches/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Untangling Diverged Branches
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bisect Regression Hunting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bisect Regression Hunting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-establish-the-performance-baseline-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Establish the Performance Baseline Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-validate-the-test-script-at-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Validate the Test Script at Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-configure-bisect-for-complex-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Configure Bisect for Complex History
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-run-the-automated-bisect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Run the Automated Bisect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-analyze-the-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Analyze the Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running It
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_monorepo_subtree_extraction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monorepo Subtree Extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_worktree_parallel_development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worktree Parallel Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-establish-the-performance-baseline-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Establish the Performance Baseline Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-validate-the-test-script-at-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Validate the Test Script at Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-configure-bisect-for-complex-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Configure Bisect for Complex History
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-run-the-automated-bisect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Run the Automated Bisect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-analyze-the-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Analyze the Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running It
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="automated-regression-hunting-with-git-bisect">Automated Regression Hunting with Git Bisect</h1>
+<h2 id="overview">Overview</h2>
+<p>When your API response times suddenly jump from 45ms to 320ms somewhere in the last 200 commits, manually checking each one isn't feasible. Git bisect leverages the directed acyclic graph (DAG) structure of your commit history to perform a binary search, reducing O(n) manual investigation to O(log n) automated checks—finding the culprit in ~8 iterations instead of 200.</p>
+<p>This walkthrough demonstrates how to build an automated bisect pipeline that:
+- Defines a reproducible performance threshold test
+- Handles build failures gracefully (marking commits as "skip")
+- Produces actionable output identifying the exact regression commit</p>
+<p>We'll hunt down a real performance regression in an order processing service where P95 latency degraded after a seemingly innocuous change.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p><strong>Required:</strong>
+- Git 2.25+ (<code>git --version</code>)
+- A repository with linear or semi-linear history between known good/bad commits
+- Bash 4.0+ for the test script
+- The ability to build and run your application at arbitrary commits</p>
+<p><strong>Assumed knowledge:</strong>
+- Basic git operations (checkout, log, show)
+- Understanding of exit codes in shell scripts
+- Familiarity with your project's build system</p>
+<p><strong>Our scenario:</strong>
+- Repository: <code>order-processing-service</code>
+- Known good commit: <code>a1b2c3d</code> (deployed 2024-01-15, P95 = 42ms)
+- Known bad commit: <code>e4f5g6h</code> (current HEAD, P95 = 318ms)
+- ~217 commits between them</p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="step-1-establish-the-performance-baseline-test">Step 1: Establish the Performance Baseline Test</h3>
+<p>Before automating bisect, we need a deterministic test that returns:
+- Exit code <code>0</code> → commit is <strong>good</strong> (performance acceptable)
+- Exit code <code>1</code> → commit is <strong>bad</strong> (regression present)
+- Exit code <code>125</code> → commit is <strong>untestable</strong> (skip it)</p>
+<p>Create <code>scripts/bisect-perf-test.sh</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env bash</span>
+<span class="nb">set</span><span class="w"> </span>-euo<span class="w"> </span>pipefail
+
+<span class="c1"># Configuration — adjust these for your system</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">SERVICE_NAME</span><span class="o">=</span><span class="s2">&quot;order-processing-service&quot;</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">THRESHOLD_MS</span><span class="o">=</span><span class="m">100</span><span class="w">          </span><span class="c1"># P95 must be below this</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">WARMUP_REQUESTS</span><span class="o">=</span><span class="m">50</span><span class="w">        </span><span class="c1"># Requests before measuring</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">TEST_REQUESTS</span><span class="o">=</span><span class="m">200</span><span class="w">         </span><span class="c1"># Requests to measure</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">SERVICE_PORT</span><span class="o">=</span><span class="m">8080</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">STARTUP_TIMEOUT_SEC</span><span class="o">=</span><span class="m">30</span>
+
+<span class="c1"># Paths</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">PROJECT_ROOT</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>--show-toplevel<span class="k">)</span><span class="s2">&quot;</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">LOG_DIR</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">PROJECT_ROOT</span><span class="si">}</span><span class="s2">/.bisect-logs&quot;</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">CURRENT_SHA</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>--short<span class="w"> </span>HEAD<span class="k">)</span><span class="s2">&quot;</span>
+
+mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">LOG_DIR</span><span class="si">}</span><span class="s2">&quot;</span>
+
+log<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;[bisect-test] </span><span class="k">$(</span>date<span class="w"> </span><span class="s1">&#39;+%H:%M:%S&#39;</span><span class="k">)</span><span class="s2"> </span><span class="nv">$*</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">LOG_DIR</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">CURRENT_SHA</span><span class="si">}</span><span class="s2">.log&quot;</span>
+<span class="o">}</span>
+
+cleanup<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;Cleaning up...&quot;</span>
+<span class="w">    </span><span class="c1"># Kill any running instance of our service</span>
+<span class="w">    </span>pkill<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">SERVICE_NAME</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
+<span class="w">    </span><span class="c1"># Clean up test containers if using Docker</span>
+<span class="w">    </span>docker<span class="w"> </span>rm<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">SERVICE_NAME</span><span class="si">}</span><span class="s2">-test&quot;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
+<span class="o">}</span>
+
+<span class="nb">trap</span><span class="w"> </span>cleanup<span class="w"> </span>EXIT
+
+<span class="c1"># Step 1: Attempt to build the project</span>
+build_project<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;Building at commit </span><span class="si">${</span><span class="nv">CURRENT_SHA</span><span class="si">}</span><span class="s2">...&quot;</span>
+
+<span class="w">    </span><span class="c1"># Handle projects that changed build systems mid-history</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;pom.xml&quot;</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span>mvn<span class="w"> </span>clean<span class="w"> </span>package<span class="w"> </span>-DskipTests<span class="w"> </span>-q<span class="w"> </span><span class="m">2</span>&gt;&gt;<span class="s2">&quot;</span><span class="si">${</span><span class="nv">LOG_DIR</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">CURRENT_SHA</span><span class="si">}</span><span class="s2">.log&quot;</span>
+<span class="w">    </span><span class="k">elif</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;build.gradle&quot;</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span>./gradlew<span class="w"> </span>clean<span class="w"> </span>build<span class="w"> </span>-x<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-q<span class="w"> </span><span class="m">2</span>&gt;&gt;<span class="s2">&quot;</span><span class="si">${</span><span class="nv">LOG_DIR</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">CURRENT_SHA</span><span class="si">}</span><span class="s2">.log&quot;</span>
+<span class="w">    </span><span class="k">elif</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;go.mod&quot;</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span>go<span class="w"> </span>build<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;bin/</span><span class="si">${</span><span class="nv">SERVICE_NAME</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span>./cmd/server<span class="w"> </span><span class="m">2</span>&gt;&gt;<span class="s2">&quot;</span><span class="si">${</span><span class="nv">LOG_DIR</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">CURRENT_SHA</span><span class="si">}</span><span class="s2">.log&quot;</span>
+<span class="w">    </span><span class="k">else</span>
+<span class="w">        </span>log<span class="w"> </span><span class="s2">&quot;ERROR: Unknown build system&quot;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="m">1</span>
+<span class="w">    </span><span class="k">fi</span>
+<span class="o">}</span>
+
+<span class="c1"># Step 2: Start the service and wait for health</span>
+start_service<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;Starting service...&quot;</span>
+
+<span class="w">    </span><span class="c1"># Adjust this command to match your service&#39;s startup</span>
+<span class="w">    </span>./bin/<span class="si">${</span><span class="nv">SERVICE_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--port<span class="o">=</span><span class="si">${</span><span class="nv">SERVICE_PORT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--config<span class="o">=</span>config/test.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--log-level<span class="o">=</span>warn<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span><span class="p">&amp;</span>&gt;<span class="s2">&quot;</span><span class="si">${</span><span class="nv">LOG_DIR</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">CURRENT_SHA</span><span class="si">}</span><span class="s2">-runtime.log&quot;</span><span class="w"> </span><span class="p">&amp;</span>
+
+<span class="w">    </span><span class="nb">local</span><span class="w"> </span><span class="nv">pid</span><span class="o">=</span><span class="nv">$!</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">pid</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span>&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">LOG_DIR</span><span class="si">}</span><span class="s2">/service.pid&quot;</span>
+
+<span class="w">    </span><span class="c1"># Wait for health endpoint</span>
+<span class="w">    </span><span class="nb">local</span><span class="w"> </span><span class="nv">elapsed</span><span class="o">=</span><span class="m">0</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="o">((</span><span class="w"> </span>elapsed<span class="w"> </span>&lt;<span class="w"> </span>STARTUP_TIMEOUT_SEC<span class="w"> </span><span class="o">))</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-sf<span class="w"> </span><span class="s2">&quot;http://localhost:</span><span class="si">${</span><span class="nv">SERVICE_PORT</span><span class="si">}</span><span class="s2">/health&quot;</span><span class="w"> </span>&gt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">            </span>log<span class="w"> </span><span class="s2">&quot;Service healthy after </span><span class="si">${</span><span class="nv">elapsed</span><span class="si">}</span><span class="s2">s&quot;</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="m">0</span>
+<span class="w">        </span><span class="k">fi</span>
+<span class="w">        </span>sleep<span class="w"> </span><span class="m">1</span>
+<span class="w">        </span><span class="o">((</span>elapsed++<span class="o">))</span>
+<span class="w">    </span><span class="k">done</span>
+
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;ERROR: Service failed to start within </span><span class="si">${</span><span class="nv">STARTUP_TIMEOUT_SEC</span><span class="si">}</span><span class="s2">s&quot;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="m">1</span>
+<span class="o">}</span>
+
+<span class="c1"># Step 3: Run the performance test</span>
+measure_p95_latency<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;Running warmup (</span><span class="si">${</span><span class="nv">WARMUP_REQUESTS</span><span class="si">}</span><span class="s2"> requests)...&quot;</span>
+
+<span class="w">    </span><span class="c1"># Warmup phase — let JIT compile, caches fill, etc.</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span><span class="w"> </span>i&lt;WARMUP_REQUESTS<span class="p">;</span><span class="w"> </span>i++<span class="o">))</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">        </span>curl<span class="w"> </span>-sf<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:</span><span class="si">${</span><span class="nv">SERVICE_PORT</span><span class="si">}</span><span class="s2">/api/v1/orders/validate&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;customer_id&quot;:&quot;cust_12345&quot;,&quot;items&quot;:[{&quot;sku&quot;:&quot;WIDGET-001&quot;,&quot;quantity&quot;:2}]}&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>&gt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
+<span class="w">    </span><span class="k">done</span>
+
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;Measuring latency (</span><span class="si">${</span><span class="nv">TEST_REQUESTS</span><span class="si">}</span><span class="s2"> requests)...&quot;</span>
+
+<span class="w">    </span><span class="c1"># Collect latency samples</span>
+<span class="w">    </span><span class="nb">local</span><span class="w"> </span><span class="nv">latencies</span><span class="o">=()</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span><span class="w"> </span>i&lt;TEST_REQUESTS<span class="p">;</span><span class="w"> </span>i++<span class="o">))</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">        </span><span class="c1"># curl&#39;s -w flag gives us precise timing in milliseconds</span>
+<span class="w">        </span><span class="nb">local</span><span class="w"> </span>latency_ms
+<span class="w">        </span><span class="nv">latency_ms</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-sf<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:</span><span class="si">${</span><span class="nv">SERVICE_PORT</span><span class="si">}</span><span class="s2">/api/v1/orders/validate&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;customer_id&quot;:&quot;cust_12345&quot;,&quot;items&quot;:[{&quot;sku&quot;:&quot;WIDGET-001&quot;,&quot;quantity&quot;:2}]}&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>-w<span class="w"> </span><span class="s2">&quot;%{time_total}&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>-o<span class="w"> </span>/dev/null<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="k">)</span>
+
+<span class="w">        </span><span class="c1"># Convert seconds to milliseconds</span>
+<span class="w">        </span><span class="nv">latency_ms</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">latency_ms</span><span class="si">}</span><span class="s2"> * 1000&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>bc<span class="k">)</span>
+<span class="w">        </span><span class="nv">latencies</span><span class="o">+=(</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">latency_ms</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">)</span>
+<span class="w">    </span><span class="k">done</span>
+
+<span class="w">    </span><span class="c1"># Calculate P95 — sort and take the 95th percentile value</span>
+<span class="w">    </span><span class="nb">local</span><span class="w"> </span>sorted_latencies
+<span class="w">    </span><span class="nv">sorted_latencies</span><span class="o">=</span><span class="k">$(</span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s\n&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">latencies</span><span class="p">[@]</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-n<span class="k">)</span>
+
+<span class="w">    </span><span class="nb">local</span><span class="w"> </span><span class="nv">p95_index</span><span class="o">=</span><span class="k">$((</span><span class="w"> </span><span class="o">(</span><span class="nv">TEST_REQUESTS</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="m">95</span><span class="o">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="k">))</span>
+<span class="w">    </span><span class="nb">local</span><span class="w"> </span>p95_value
+<span class="w">    </span><span class="nv">p95_value</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">sorted_latencies</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">p95_index</span><span class="si">}</span><span class="s2">p&quot;</span><span class="k">)</span>
+
+<span class="w">    </span><span class="c1"># Round to integer for comparison</span>
+<span class="w">    </span><span class="nv">p95_value</span><span class="o">=</span><span class="k">$(</span><span class="nb">printf</span><span class="w"> </span><span class="s2">&quot;%.0f&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">p95_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span>
+
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;P95 latency: </span><span class="si">${</span><span class="nv">p95_value</span><span class="si">}</span><span class="s2">ms (threshold: </span><span class="si">${</span><span class="nv">THRESHOLD_MS</span><span class="si">}</span><span class="s2">ms)&quot;</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">p95_value</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="o">}</span>
+
+<span class="c1"># Main execution</span>
+main<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;========================================&quot;</span>
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;Testing commit: </span><span class="si">${</span><span class="nv">CURRENT_SHA</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="w">    </span>log<span class="w"> </span><span class="s2">&quot;========================================&quot;</span>
+
+<span class="w">    </span><span class="c1"># Build phase — exit 125 (skip) if build fails</span>
+<span class="w">    </span><span class="c1"># This handles commits with syntax errors, missing deps, etc.</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span>!<span class="w"> </span>build_project<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span>log<span class="w"> </span><span class="s2">&quot;Build failed — marking commit as SKIP&quot;</span>
+<span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">125</span><span class="w">  </span><span class="c1"># Special exit code tells bisect to skip this commit</span>
+<span class="w">    </span><span class="k">fi</span>
+
+<span class="w">    </span><span class="c1"># Startup phase — also skip if service won&#39;t start</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span>!<span class="w"> </span>start_service<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span>log<span class="w"> </span><span class="s2">&quot;Service startup failed — marking commit as SKIP&quot;</span>
+<span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">125</span>
+<span class="w">    </span><span class="k">fi</span>
+
+<span class="w">    </span><span class="c1"># Measurement phase</span>
+<span class="w">    </span><span class="nb">local</span><span class="w"> </span>p95
+<span class="w">    </span><span class="nv">p95</span><span class="o">=</span><span class="k">$(</span>measure_p95_latency<span class="k">)</span>
+
+<span class="w">    </span><span class="c1"># Decision: is this commit good or bad?</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">((</span><span class="w"> </span>p95<span class="w"> </span>&lt;<span class="w"> </span>THRESHOLD_MS<span class="w"> </span><span class="o">))</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span>log<span class="w"> </span><span class="s2">&quot;RESULT: GOOD (</span><span class="si">${</span><span class="nv">p95</span><span class="si">}</span><span class="s2">ms &lt; </span><span class="si">${</span><span class="nv">THRESHOLD_MS</span><span class="si">}</span><span class="s2">ms)&quot;</span>
+<span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">0</span>
+<span class="w">    </span><span class="k">else</span>
+<span class="w">        </span>log<span class="w"> </span><span class="s2">&quot;RESULT: BAD (</span><span class="si">${</span><span class="nv">p95</span><span class="si">}</span><span class="s2">ms &gt;= </span><span class="si">${</span><span class="nv">THRESHOLD_MS</span><span class="si">}</span><span class="s2">ms)&quot;</span>
+<span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">    </span><span class="k">fi</span>
+<span class="o">}</span>
+
+main<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
+</code></pre></div>
+<h3 id="step-2-validate-the-test-script-at-boundaries">Step 2: Validate the Test Script at Boundaries</h3>
+<p>Before running bisect, verify the script correctly identifies both endpoints:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Test at the known-good commit</span>
+git<span class="w"> </span>checkout<span class="w"> </span>a1b2c3d
+./scripts/bisect-perf-test.sh
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Exit code: </span><span class="nv">$?</span><span class="s2">&quot;</span><span class="w">  </span><span class="c1"># Should be 0</span>
+
+<span class="c1"># Test at the known-bad commit  </span>
+git<span class="w"> </span>checkout<span class="w"> </span>e4f5g6h
+./scripts/bisect-perf-test.sh
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Exit code: </span><span class="nv">$?</span><span class="s2">&quot;</span><span class="w">  </span><span class="c1"># Should be 1</span>
+
+<span class="c1"># Return to main branch</span>
+git<span class="w"> </span>checkout<span class="w"> </span>main
+</code></pre></div>
+<h3 id="step-3-configure-bisect-for-complex-history">Step 3: Configure Bisect for Complex History</h3>
+<p>For repositories with merge commits, configure bisect behavior:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a bisect configuration that handles your branching model</span>
+cat<span class="w"> </span>&gt;<span class="w"> </span>.git/info/bisect-options<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s"># Skip merge commits — they often have build issues and </span>
+<span class="s"># the actual change is in the merged branch anyway</span>
+<span class="s">GIT_BISECT_SKIP_MERGE=1</span>
+<span class="s">EOF</span>
+</code></pre></div>
+<h3 id="step-4-run-the-automated-bisect">Step 4: Run the Automated Bisect</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Start bisect session</span>
+git<span class="w"> </span>bisect<span class="w"> </span>start
+
+<span class="c1"># Mark the boundaries</span>
+git<span class="w"> </span>bisect<span class="w"> </span>bad<span class="w"> </span>e4f5g6h<span class="w">   </span><span class="c1"># Current HEAD with regression</span>
+git<span class="w"> </span>bisect<span class="w"> </span>good<span class="w"> </span>a1b2c3d<span class="w">  </span><span class="c1"># Last known good deployment</span>
+
+<span class="c1"># Launch automated binary search</span>
+<span class="c1"># Git will checkout commits and run your script until it finds the first bad commit</span>
+git<span class="w"> </span>bisect<span class="w"> </span>run<span class="w"> </span>./scripts/bisect-perf-test.sh
+</code></pre></div>
+<h3 id="step-5-analyze-the-results">Step 5: Analyze the Results</h3>
+<p>When bisect completes, you'll see output like:</p>
+<div class="highlight"><pre><span></span><code>e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6 is the first bad commit
+commit e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6
+Author: jane.doe@company.com
+Date:   Tue Jan 23 14:32:17 2024 -0800
+
+    perf: Switch order validation to use reflection-based field mapping
+
+    This simplifies the validation logic by dynamically mapping fields
+    instead of explicit accessors.
+
+    Closes #1847
+
+ src/main/java/com/company/orders/validation/OrderValidator.java | 47 +++++-----
+ 1 file changed, 28 insertions(+), 19 deletions(-)
+</code></pre></div>
+<p>Create a summary script to generate a report:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env bash</span>
+<span class="c1"># scripts/bisect-report.sh — Generate a summary after bisect completes</span>
+
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">FIRST_BAD</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>bisect<span class="w"> </span>log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;first bad commit&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $1}&#39;</span><span class="k">)</span>
+<span class="nb">readonly</span><span class="w"> </span><span class="nv">LOG_DIR</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>--show-toplevel<span class="k">)</span><span class="s2">/.bisect-logs&quot;</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== BISECT REGRESSION REPORT ===&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;First bad commit: </span><span class="si">${</span><span class="nv">FIRST_BAD</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Commit details:&quot;</span>
+git<span class="w"> </span>show<span class="w"> </span>--stat<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">FIRST_BAD</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Files changed:&quot;</span>
+git<span class="w"> </span>diff-tree<span class="w"> </span>--no-commit-id<span class="w"> </span>--name-only<span class="w"> </span>-r<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">FIRST_BAD</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Performance measurements collected:&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Commit       | P95 (ms) | Result&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;-------------|----------|-------&quot;</span>
+
+<span class="k">for</span><span class="w"> </span>logfile<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">LOG_DIR</span><span class="si">}</span><span class="s2">&quot;</span>/*.log<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">logfile</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span><span class="nv">sha</span><span class="o">=</span><span class="k">$(</span>basename<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">logfile</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span>.log<span class="k">)</span>
+<span class="w">        </span><span class="nv">p95</span><span class="o">=</span><span class="k">$(</span>grep<span class="w"> </span><span class="s2">&quot;P95 latency:&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">logfile</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">&#39;[0-9]+ms&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39;ms&#39;</span><span class="k">)</span>
+<span class="w">        </span><span class="nv">result</span><span class="o">=</span><span class="k">$(</span>grep<span class="w"> </span><span class="s2">&quot;RESULT:&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">logfile</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="k">)</span>
+<span class="w">        </span><span class="o">[[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">p95</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">printf</span><span class="w"> </span><span class="s2">&quot;%-12s | %8s | %s\n&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">sha</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">p95</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">result</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="k">fi</span>
+<span class="k">done</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-t<span class="s1">&#39;|&#39;</span><span class="w"> </span>-k2<span class="w"> </span>-n
+
+<span class="c1"># Clean up bisect state</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Run &#39;git bisect reset&#39; to return to your original HEAD&quot;</span>
+</code></pre></div>
+<h2 id="running-it">Running It</h2>
+<p>Complete end-to-end execution:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Clone and enter the repository</span>
+<span class="nb">cd</span><span class="w"> </span>~/projects/order-processing-service
+
+<span class="c1"># 2. Ensure the test script is executable</span>
+chmod<span class="w"> </span>+x<span class="w"> </span>scripts/bisect-perf-test.sh
+chmod<span class="w"> </span>+x<span class="w"> </span>scripts/bisect-report.sh
+
+<span class="c1"># 3. Verify test script works at both boundaries</span>
+git<span class="w"> </span>stash<span class="w">  </span><span class="c1"># Save any local changes</span>
+
+git<span class="w"> </span>checkout<span class="w"> </span>a1b2c3d
+./scripts/bisect-perf-test.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Good commit verified&quot;</span>
+
+git<span class="w"> </span>checkout<span class="w"> </span>e4f5g6h<span class="w">  </span>
+./scripts/bisect-perf-test.sh<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Bad commit verified&quot;</span>
+
+<span class="c1"># 4. Run automated bisect (this takes ~15-30 minutes for 200 commits)</span>
+git<span class="w"> </span>bisect<span class="w"> </span>start<span class="w"> </span>--no-checkout<span class="w">  </span><span class="c1"># Optional: avoid modifying working tree</span>
+git<span class="w"> </span>bisect<span class="w"> </span>bad<span class="w"> </span>e4f5g6h
+git<span class="w"> </span>bisect<span class="w"> </span>good<span class="w"> </span>a1b2c3d
+<span class="nb">time</span><span class="w"> </span>git<span class="w"> </span>bisect<span class="w"> </span>run<span class="w"> </span>./scripts/bisect-perf-test.sh
+
+<span class="c1"># 5. Generate the report</span>
+./scripts/bisect-report.sh<span class="w"> </span>&gt;<span class="w"> </span>regression-report-<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.txt
+
+<span class="c1"># 6. Clean up</span>
+git<span class="w"> </span>bisect<span class="w"> </span>reset
+git<span class="w"> </span>stash<span class="w"> </span>pop<span class="w">  </span><span class="c1"># Restore local changes</span>
+</code></pre></div>
+<p>Expected output:</p>
+<p>```
+running ./scripts/bisect-perf-test.sh
+[bisect-test] 14:23:01 ========================================
+[bisect-test] 14:23:01 Testing commit: f3d4e5a
+[bisect-</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

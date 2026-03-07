@@ -1,0 +1,1603 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Senior-engineer-level research on tools, frameworks, and infrastructure.">
+      
+      
+      
+      
+        <link rel="prev" href="../dbt/examples/05_ci_cd_slim_deployments/">
+      
+      
+        <link rel="next" href="sources/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>git - Technical Overview - Tool Research</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#git-technical-overview" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Tool Research" class="md-header__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tool Research
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              git - Technical Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../dbt/" class="md-tabs__link">
+          
+  
+  
+  DBT
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  GIT
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Tool Research" class="md-nav__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tool Research
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DBT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DBT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dbt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dbt/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dbt/examples/01_staging_layer_from_raw_sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Staging Layer From Raw Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dbt/examples/02_incremental_event_stream_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Event Stream Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dbt/examples/03_dimensional_model_star_schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dimensional Model Star Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dbt/examples/04_custom_macros_cross_db_compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Macros Cross Db Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dbt/examples/05_ci_cd_slim_deployments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ci Cd Slim Deployments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GIT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    GIT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Is
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Concepts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#primary-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Use Cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Primary Use Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#collaborative-feature-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collaborative Feature Development
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-review-workflow-pullmerge-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Review Workflow (Pull/Merge Requests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release-management-and-tagging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Management and Tagging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#history-archaeology-and-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History Archaeology and Debugging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-and-infrastructure-as-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration and Infrastructure as Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#senior-staff-engineer-highlights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Senior / Staff Engineer Highlights
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Senior / Staff Engineer Highlights">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-gotchas-failure-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Gotchas &amp; Failure Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-not-to-use-git" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When NOT To Use git
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-fits-into-a-broader-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Fits Into a Broader Stack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-scale-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance &amp; Scale Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-tradeoffs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Tradeoffs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/01_surgical_history_rewrite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Surgical History Rewrite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/02_untangling_diverged_branches/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Untangling Diverged Branches
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/03_bisect_regression_hunting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bisect Regression Hunting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/04_monorepo_subtree_extraction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monorepo Subtree Extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/05_worktree_parallel_development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worktree Parallel Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Is
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Concepts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#primary-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Use Cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Primary Use Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#collaborative-feature-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collaborative Feature Development
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-review-workflow-pullmerge-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Review Workflow (Pull/Merge Requests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release-management-and-tagging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Management and Tagging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#history-archaeology-and-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History Archaeology and Debugging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-and-infrastructure-as-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration and Infrastructure as Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#senior-staff-engineer-highlights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Senior / Staff Engineer Highlights
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Senior / Staff Engineer Highlights">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-gotchas-failure-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Gotchas &amp; Failure Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-not-to-use-git" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When NOT To Use git
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-fits-into-a-broader-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Fits Into a Broader Stack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-scale-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance &amp; Scale Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-tradeoffs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Tradeoffs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="git-technical-overview">git — Technical Overview</h1>
+<h2 id="what-it-is">What It Is</h2>
+<p>Git is a distributed version control system that tracks content changes as a directed acyclic graph (DAG) of snapshots, not diffs. It operates locally-first with optional remote synchronization, making every clone a full repository with complete history. Git is NOT a backup system, NOT a deployment tool, and NOT a substitute for actual release management—it's a content-addressable filesystem with a VCS user interface bolted on top. It solves the problem of tracking, merging, and distributing code changes across distributed teams without requiring constant network connectivity or a central authority.</p>
+<h2 id="core-concepts">Core Concepts</h2>
+<p><strong>Content-Addressable Storage</strong> — Every object (blob, tree, commit, tag) is identified by its SHA-1 hash. Git doesn't store diffs; it stores complete snapshots and computes differences on demand. Understanding this explains why operations like <code>checkout</code> are fast and why history rewriting changes commit hashes downstream.</p>
+<p><strong>Three Trees</strong> — The working directory (your filesystem), the index/staging area (proposed next commit), and HEAD (last commit on current branch). Every git operation manipulates one or more of these trees. Confusing these is the source of most beginner and intermediate mistakes.</p>
+<p><strong>Refs and the Reflog</strong> — Branches and tags are just pointers (refs) to commits. The reflog tracks where refs pointed historically, which is your safety net when you think you've lost work. Refs are mutable; commits are immutable.</p>
+<p><strong>Merge vs. Rebase Semantics</strong> — Merge creates a new commit with two parents preserving branch topology. Rebase replays commits onto a new base, rewriting history for a linear graph. Neither is universally better; the choice depends on whether you value history accuracy or history cleanliness.</p>
+<p><strong>Remote Tracking Branches</strong> — <code>origin/main</code> is not <code>main</code>. Remote tracking branches are local copies of where remote refs pointed at last fetch. <code>git pull</code> is <code>git fetch</code> + <code>git merge</code>; understanding this prevents confusion about diverged histories.</p>
+<p><strong>The Object Model</strong> — Commits point to trees, trees point to blobs and other trees. This forms the DAG. A commit contains metadata (author, committer, message, parent refs) plus a pointer to the root tree. Everything else is derived from traversing this graph.</p>
+<h2 id="primary-use-cases">Primary Use Cases</h2>
+<h3 id="collaborative-feature-development">Collaborative Feature Development</h3>
+<ul>
+<li><strong>When to reach for it:</strong> Multiple engineers working on the same codebase, need to isolate changes, review before merge, maintain audit trail</li>
+<li><strong>When NOT to reach for it:</strong> Single-developer throwaway scripts, content that changes rarely (use artifact storage), binary assets that don't diff well (use Git LFS or dedicated asset management)</li>
+</ul>
+<h3 id="code-review-workflow-pullmerge-requests">Code Review Workflow (Pull/Merge Requests)</h3>
+<ul>
+<li><strong>When to reach for it:</strong> Team requires approval gates, CI must pass before merge, need discussion threads tied to specific changes</li>
+<li><strong>When NOT to reach for it:</strong> Hotfixes requiring immediate deployment (have a bypass process), trivial changes where ceremony exceeds value</li>
+</ul>
+<h3 id="release-management-and-tagging">Release Management and Tagging</h3>
+<ul>
+<li><strong>When to reach for it:</strong> Need immutable markers for shipped versions, must correlate deployments to exact code state, audit requirements</li>
+<li><strong>When NOT to reach for it:</strong> Continuous deployment where every commit to main deploys (tags become noise), environments managed by commit SHA directly</li>
+</ul>
+<h3 id="history-archaeology-and-debugging">History Archaeology and Debugging</h3>
+<ul>
+<li><strong>When to reach for it:</strong> <code>git bisect</code> to find regression-introducing commits, <code>git blame</code> to understand why code exists, <code>git log -S</code> to find when code was added/removed</li>
+<li><strong>When NOT to reach for it:</strong> Debugging runtime behavior (use APM/tracing), understanding system behavior (use observability tooling)</li>
+</ul>
+<h3 id="configuration-and-infrastructure-as-code">Configuration and Infrastructure as Code</h3>
+<ul>
+<li><strong>When to reach for it:</strong> Terraform, Kubernetes manifests, CI configs—anything declarative that benefits from change tracking and review</li>
+<li><strong>When NOT to reach for it:</strong> Secrets (use vault/secrets manager), large generated files, environment-specific values that should be injected at runtime</li>
+</ul>
+<h2 id="senior-staff-engineer-highlights">Senior / Staff Engineer Highlights</h2>
+<h3 id="production-gotchas-failure-modes">Production Gotchas &amp; Failure Modes</h3>
+<p><strong>Force Push to Shared Branches</strong> — <code>git push --force</code> on a branch others have based work on creates divergent histories. Their next pull fails or silently creates merge commits. Use <code>--force-with-lease</code> which fails if remote has commits you haven't seen. Better: never force-push shared branches; use revert commits instead.</p>
+<p><strong>Large Files and Repository Bloat</strong> — Git stores full snapshots. Add a 100MB file, delete it next commit, repo is still 100MB+ forever. <code>git filter-repo</code> or BFG can rewrite history but requires coordinated team effort. Prevention: <code>.gitattributes</code> with Git LFS for binaries, pre-commit hooks checking file sizes.</p>
+<p><strong>Merge Commits in CI Creating Non-Reproducible Builds</strong> — GitHub/GitLab can create merge commits for PRs that differ from local merges due to timing. Your CI tests the merge commit, but developers test their branch. Subtle test flakiness or "works on my machine" issues follow. Solution: require rebasing before merge or use merge queues.</p>
+<p><strong>Submodule Hell</strong> — Submodules pin to specific commits but don't auto-update. <code>git clone</code> doesn't fetch submodules by default. Developers work on stale dependencies unknowingly. CI caches submodules incorrectly. Alternative: monorepos, git subtree, or proper dependency management (npm, pip, go modules).</p>
+<p><strong>Credential Leakage in History</strong> — Committed secrets remain in history even after removal in subsequent commits. Automated scanners find them. Requires history rewriting which breaks all forks/clones. Prevention: pre-commit hooks (detect-secrets, trufflehog), separate secret management from day one.</p>
+<p><strong>Shallow Clone Breakage</strong> — CI systems often shallow clone (<code>--depth 1</code>) for speed. Operations requiring history (<code>git describe</code>, <code>git log</code>, merge-base detection) fail or give wrong answers. Some tooling silently falls back to wrong behavior. Know what your pipeline actually needs.</p>
+<p><strong>Reflog Expiration</strong> — The reflog that saves your "lost" commits expires (default 90 days for reachable, 30 for unreachable). Long-running branches with force-pushes can genuinely lose history. In shared repos, reflog is per-clone—your teammate's reflog won't save you.</p>
+<h3 id="when-not-to-use-git">When NOT To Use git</h3>
+<p><strong>Large Binary Assets</strong> — Git LFS helps but adds complexity. For multi-GB video/image assets, use dedicated artifact storage (S3, Artifactory, cloud storage) with references in git. Git's diffing and merge tooling provides zero value for binaries.</p>
+<p><strong>Database Schema as Source of Truth</strong> — Track migrations in git, but the database itself is the schema authority. Tools like Liquibase or Flyway bridge this, but don't expect git alone to manage schema state.</p>
+<p><strong>Secrets and Credentials</strong> — Use HashiCorp Vault, AWS Secrets Manager, or similar. Git-crypt and SOPS exist but add operational complexity. The moment a secret touches git history, assume it's compromised.</p>
+<p><strong>Ephemeral/Generated Content</strong> — Build artifacts, compiled code, node_modules, vendor directories. Generates massive repos, merge conflicts on generated content, and lies about what code produces what output.</p>
+<p><strong>Real-time Collaboration</strong> — Git's model is batch-oriented (commit, push). For Google Docs-style real-time collaboration, use CRDTs (Yjs, Automerge) or operational transform systems.</p>
+<h3 id="how-it-fits-into-a-broader-stack">How It Fits Into a Broader Stack</h3>
+<div class="highlight"><pre><span></span><code>Developer Workstation
+    └── git (local)
+           │
+           ▼
+Remote Repository (GitHub/GitLab/Bitbucket)
+    ├── PR/MR → Code Review
+    ├── Webhooks → CI/CD (Actions, Jenkins, CircleCI)
+    │                └── Build/Test/Deploy Pipelines
+    ├── Branch Protection → Merge Requirements
+    └── Release Tags → Artifact Registries (Docker, npm, PyPI)
+                              │
+                              ▼
+                       Deployment Targets
+                       (K8s, Lambda, VMs)
+</code></pre></div>
+<p><strong>Upstream:</strong> IDEs (VSCode, JetBrains), pre-commit frameworks, local linters/formatters, development containers</p>
+<p><strong>Downstream:</strong> CI/CD systems, artifact registries, deployment orchestration, GitOps controllers (ArgoCD, Flux), infrastructure provisioning (Terraform, Pulumi)</p>
+<p><strong>Patterns:</strong>
+- <strong>GitOps:</strong> Git as single source of truth for declarative infrastructure; controllers reconcile cluster state to repo state
+- <strong>Trunk-Based Development:</strong> Short-lived branches, frequent merges to main, feature flags over long-lived branches
+- <strong>Git-Flow:</strong> Long-lived develop/release branches; adds ceremony but provides release isolation (less common in continuous deployment)</p>
+<h3 id="performance-scale-considerations">Performance &amp; Scale Considerations</h3>
+<p><strong>Repository Size</strong> — Git performance degrades noticeably past 1-2GB, painfully past 5GB. <code>git gc</code> helps temporarily. Solutions: shallow clones for CI, split into multiple repos, use partial clone (<code>--filter=blob:none</code>), VFS for Git (Microsoft's solution for Windows scale).</p>
+<p><strong>File Count</strong> — Repositories with &gt;100k files see slow <code>git status</code> due to filesystem operations. <code>core.fsmonitor</code> with Watchman helps significantly. Sparse checkout reduces working directory size.</p>
+<p><strong>History Depth</strong> — Repositories with &gt;100k commits slow down log operations and merges. Rarely a real problem unless combined with size issues, but <code>git replace</code> can graft shallow history.</p>
+<p><strong>Monorepo Scaling</strong> — Google/Meta scale requires custom tooling (Piper, Sapling). For most teams, path-based CODEOWNERS, sparse checkout, and build system caching (Bazel, Nx, Turborepo) make git monorepos tractable to ~100 engineers.</p>
+<p><strong>Clone Time</strong> — First clone of large repos is painful. Partial clone, shallow clone, or repo mirrors (geographic distribution) are the levers. CI should cache <code>.git</code> directories between runs.</p>
+<p><strong>Detection:</strong> Watch <code>git status</code> time, <code>git fetch</code> time, <code>.git</code> directory size, clone time for new team members. These are leading indicators before productivity collapses.</p>
+<h2 id="key-tradeoffs">Key Tradeoffs</h2>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Tradeoff</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Distributed vs. Centralized</strong></td>
+<td>Every clone is complete (resilience, offline work) but means no single source of truth without convention; divergent histories are a feature, not a bug</td>
+</tr>
+<tr>
+<td><strong>Immutable History vs. Rewriting</strong></td>
+<td>Clean history aids understanding but rewriting shared history breaks collaborators; pick a team convention and enforce it</td>
+</tr>
+<tr>
+<td><strong>Flexibility vs. Guardrails</strong></td>
+<td>Git lets you do almost anything (freedom) but won't stop you from destroying work (footgun); requires tooling layer (branch protection, hooks) for safety</td>
+</tr>
+<tr>
+<td><strong>Snapshot Storage vs. Diff Storage</strong></td>
+<td>Fast checkouts and comparisons but poor storage efficiency for large binaries; designed for text, retrofit solutions (LFS) add complexity</td>
+</tr>
+<tr>
+<td><strong>Local-First vs. Network-First</strong></td>
+<td>Excellent offline experience and speed but sync conflicts must be resolved manually; no automatic conflict resolution</td>
+</tr>
+</tbody>
+</table>
+<h2 id="quick-reference">Quick Reference</h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Daily workflow</span>
+git<span class="w"> </span>status<span class="w">                          </span><span class="c1"># What&#39;s changed</span>
+git<span class="w"> </span>diff<span class="w">                            </span><span class="c1"># Unstaged changes</span>
+git<span class="w"> </span>diff<span class="w"> </span>--staged<span class="w">                   </span><span class="c1"># Staged changes</span>
+git<span class="w"> </span>add<span class="w"> </span>-p<span class="w">                          </span><span class="c1"># Interactive staging (partial files)</span>
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;msg&quot;</span><span class="w">                 </span><span class="c1"># Commit staged changes</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>HEAD<span class="w">                </span><span class="c1"># Push current branch</span>
+
+<span class="c1"># Branch management</span>
+git<span class="w"> </span>switch<span class="w"> </span>-c<span class="w"> </span>feature/foo<span class="w">           </span><span class="c1"># Create and switch (prefer over checkout)</span>
+git<span class="w"> </span>switch<span class="w"> </span>main<span class="w">                     </span><span class="c1"># Switch branches</span>
+git<span class="w"> </span>branch<span class="w"> </span>-d<span class="w"> </span>feature/foo<span class="w">           </span><span class="c1"># Delete merged branch</span>
+git<span class="w"> </span>branch<span class="w"> </span>-D<span class="w"> </span>feature/foo<span class="w">           </span><span class="c1"># Force delete unmerged</span>
+
+<span class="c1"># Sync and merge</span>
+git<span class="w"> </span>fetch<span class="w"> </span>--all<span class="w"> </span>--prune<span class="w">             </span><span class="c1"># Fetch all remotes, clean dead refs</span>
+git<span class="w"> </span>pull<span class="w"> </span>--rebase<span class="w">                   </span><span class="c1"># Rebase local commits on top of upstream</span>
+git<span class="w"> </span>rebase<span class="w"> </span>-i<span class="w"> </span>HEAD~3<span class="w">                </span><span class="c1"># Interactive rebase last 3 commits</span>
+git<span class="w"> </span>merge<span class="w"> </span>--no-ff<span class="w"> </span>feature/foo<span class="w">       </span><span class="c1"># Merge with explicit merge commit</span>
+
+<span class="c1"># History investigation</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>--graph<span class="w"> </span>-20<span class="w">       </span><span class="c1"># Visual recent history</span>
+git<span class="w"> </span>log<span class="w"> </span>-S<span class="w"> </span><span class="s2">&quot;search_term&quot;</span><span class="w">            </span><span class="c1"># Find commits adding/removing text</span>
+git<span class="w"> </span>blame<span class="w"> </span>-L<span class="w"> </span><span class="m">10</span>,20<span class="w"> </span>file.py<span class="w">          </span><span class="c1"># Who changed lines 10-20</span>
+git<span class="w"> </span>bisect<span class="w"> </span>start/good/bad<span class="w">           </span><span class="c1"># Binary search for bug introduction</span>
+
+<span class="c1"># Recovery and undo</span>
+git<span class="w"> </span>reflog<span class="w">                          </span><span class="c1"># See where HEAD has been</span>
+git<span class="w"> </span>reset<span class="w"> </span>--hard<span class="w"> </span>HEAD~1<span class="w">             </span><span class="c1"># Undo last commit (destructive)</span>
+git<span class="w"> </span>reset<span class="w"> </span>--soft<span class="w"> </span>HEAD~1<span class="w">             </span><span class="c1"># Undo commit, keep changes staged</span>
+git<span class="w"> </span>restore<span class="w"> </span>file.py<span class="w">                 </span><span class="c1"># Discard working directory changes</span>
+git<span class="w"> </span>restore<span class="w"> </span>--staged<span class="w"> </span>file.py<span class="w">        </span><span class="c1"># Unstage file</span>
+git<span class="w"> </span>revert<span class="w"> </span>&lt;sha&gt;<span class="w">                    </span><span class="c1"># Create commit undoing &lt;sha&gt;</span>
+git<span class="w"> </span>stash<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;wip&quot;</span><span class="w">             </span><span class="c1"># Stash changes</span>
+git<span class="w"> </span>stash<span class="w"> </span>pop<span class="w">                       </span><span class="c1"># Restore stashed changes</span>
+
+<span class="c1"># Inspection</span>
+git<span class="w"> </span>show<span class="w"> </span>&lt;sha&gt;<span class="w">                      </span><span class="c1"># Show commit details</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>main..HEAD<span class="w">        </span><span class="c1"># Commits in current branch not in main</span>
+git<span class="w"> </span>cherry<span class="w"> </span>-v<span class="w"> </span>main<span class="w">                  </span><span class="c1"># What would be cherry-picked</span>
+
+<span class="c1"># Maintenance</span>
+git<span class="w"> </span>gc<span class="w"> </span>--aggressive<span class="w">                 </span><span class="c1"># Garbage collect, compress</span>
+git<span class="w"> </span>fsck<span class="w">                            </span><span class="c1"># Verify object database integrity</span>
+</code></pre></div>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
