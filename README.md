@@ -92,3 +92,9 @@ Input: "dbt"
 - **Change Claude model:** edit `model=` in `synthesizer.py` / `example_generator.py`
 - **Adjust example count:** edit `PLANNER_PROMPT` in `example_generator.py`
 - **Add new doc sections:** extend prompts in `synthesizer.py`
+
+
+## Keys
+brew install direnv
+# add `eval "$(direnv hook zsh)"` to .zshrc
+# then put your keys in .envrc inside the project folder

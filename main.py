@@ -12,6 +12,9 @@ import os
 import shutil
 import sys
 
+# Ensure project root is on the path regardless of how the script is invoked
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import anthropic
 
 from agents.researcher import ResearcherAgent
