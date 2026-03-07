@@ -1,0 +1,1396 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Senior-engineer-level research on tools, frameworks, and infrastructure.">
+      
+      
+      
+      
+        <link rel="prev" href="../02_incremental_event_stream_processing/">
+      
+      
+        <link rel="next" href="../04_custom_macros_cross_db_compatibility/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Dimensional Model Star Schema - Tool Research</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#title-dimensional-modeling-facts-dimensions-and-scd-type-2" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Tool Research" class="md-header__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tool Research
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Dimensional Model Star Schema
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  DBT
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Tool Research" class="md-nav__button md-logo" aria-label="Tool Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tool Research
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DBT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DBT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_staging_layer_from_raw_sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Staging Layer From Raw Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_incremental_event_stream_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incremental Event Stream Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dimensional Model Star Schema
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dimensional Model Star Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#title-dimensional-modeling-facts-dimensions-and-scd-type-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        title: Dimensional Modeling: Facts, Dimensions, and SCD Type 2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dimensional-modeling-facts-dimensions-and-scd-type-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dimensional Modeling: Facts, Dimensions, and SCD Type 2
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dimensional Modeling: Facts, Dimensions, and SCD Type 2">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-define-source-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Define Source Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-build-staging-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Build Staging Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-implement-scd-type-2-with-dbt-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Implement SCD Type 2 with dbt Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-build-dimension-tables-with-surrogate-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Build Dimension Tables with Surrogate Keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_custom_macros_cross_db_compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Macros Cross Db Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_ci_cd_slim_deployments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ci Cd Slim Deployments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#title-dimensional-modeling-facts-dimensions-and-scd-type-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        title: Dimensional Modeling: Facts, Dimensions, and SCD Type 2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dimensional-modeling-facts-dimensions-and-scd-type-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dimensional Modeling: Facts, Dimensions, and SCD Type 2
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dimensional Modeling: Facts, Dimensions, and SCD Type 2">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-define-source-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Define Source Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-build-staging-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Build Staging Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-implement-scd-type-2-with-dbt-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Implement SCD Type 2 with dbt Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-build-dimension-tables-with-surrogate-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Build Dimension Tables with Surrogate Keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<hr />
+<h2 id="title-dimensional-modeling-facts-dimensions-and-scd-type-2">title: Dimensional Modeling: Facts, Dimensions, and SCD Type 2</h2>
+<h1 id="dimensional-modeling-facts-dimensions-and-scd-type-2">Dimensional Modeling: Facts, Dimensions, and SCD Type 2</h1>
+<h2 id="overview">Overview</h2>
+<p>This walkthrough demonstrates how to build a production-grade star schema for an e-commerce analytics platform using dbt. We'll construct:</p>
+<ol>
+<li><strong>Dimension tables</strong> that describe the "who, what, where" of your business (customers, products, stores)</li>
+<li><strong>Fact tables</strong> that capture measurable business events (orders, transactions)</li>
+<li><strong>Slowly Changing Dimensions (Type 2)</strong> that preserve historical attribute changes using dbt snapshots</li>
+</ol>
+<p>Why this matters: Business stakeholders ask questions like "What was the customer's loyalty tier when they placed this order?" or "How did our product pricing changes affect sales?" Type 2 SCDs let you answer these questions accurately by maintaining a complete history of dimensional changes, rather than only seeing current state.</p>
+<p>The star schema pattern also optimizes for the access patterns of analytical queries—wide, denormalized dimension tables joined to narrow, deep fact tables—resulting in simpler queries and better performance on columnar databases.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p><strong>Technical Requirements:</strong>
+- dbt Core 1.6+ or dbt Cloud
+- A supported data warehouse (this example uses Snowflake; syntax adapts easily to BigQuery, Redshift, or Databricks)
+- Python 3.8+ (for dbt installation)
+- Git for version control</p>
+<p><strong>Knowledge Assumed:</strong>
+- Familiarity with SQL and basic dbt concepts (models, refs, sources)
+- Understanding of primary keys, foreign keys, and JOIN operations
+- Basic understanding of data warehousing concepts</p>
+<p><strong>Initial Setup:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a new dbt project if you don&#39;t have one</span>
+dbt<span class="w"> </span>init<span class="w"> </span>ecommerce_analytics
+<span class="nb">cd</span><span class="w"> </span>ecommerce_analytics
+
+<span class="c1"># Install dbt-utils for surrogate key generation</span>
+<span class="c1"># Add to packages.yml:</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># packages.yml</span>
+<span class="nt">packages</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dbt-labs/dbt_utils</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.1.1&quot;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>dbt<span class="w"> </span>deps
+</code></pre></div>
+<h2 id="implementation">Implementation</h2>
+<h3 id="step-1-define-source-data">Step 1: Define Source Data</h3>
+<p>Before building dimensional models, we need to declare our source systems. This creates a contract between raw data and our transformations, enabling lineage tracking and freshness monitoring.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># models/staging/ecommerce/_ecommerce__sources.yml</span>
+<span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+
+<span class="nt">sources</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ecommerce_raw</span>
+<span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Operational</span><span class="nv"> </span><span class="s">database</span><span class="nv"> </span><span class="s">replica</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">e-commerce</span><span class="nv"> </span><span class="s">platform&quot;</span>
+<span class="w">    </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">raw_database</span>
+<span class="w">    </span><span class="nt">schema</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ecommerce</span>
+
+<span class="w">    </span><span class="c1"># Freshness checks alert us when source data stops flowing</span>
+<span class="w">    </span><span class="nt">freshness</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">warn_after</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="nt"> period</span><span class="p">:</span><span class="w"> </span><span class="nv">hour</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">error_after</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">,</span><span class="nt"> period</span><span class="p">:</span><span class="w"> </span><span class="nv">hour</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">loaded_at_field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">_etl_loaded_at</span>
+
+<span class="w">    </span><span class="nt">tables</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">customers</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Customer</span><span class="nv"> </span><span class="s">account</span><span class="nv"> </span><span class="s">information</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">user</span><span class="nv"> </span><span class="s">service&quot;</span>
+<span class="w">        </span><span class="nt">columns</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">customer_id</span>
+<span class="w">            </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Primary</span><span class="nv"> </span><span class="s">key</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">source</span><span class="nv"> </span><span class="s">system&quot;</span>
+<span class="w">            </span><span class="nt">tests</span><span class="p">:</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unique</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">not_null</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">products</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Product</span><span class="nv"> </span><span class="s">catalog</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">inventory</span><span class="nv"> </span><span class="s">management</span><span class="nv"> </span><span class="s">system&quot;</span>
+<span class="w">        </span><span class="nt">columns</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">product_id</span>
+<span class="w">            </span><span class="nt">tests</span><span class="p">:</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unique</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">not_null</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">orders</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Order</span><span class="nv"> </span><span class="s">headers</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">order</span><span class="nv"> </span><span class="s">management</span><span class="nv"> </span><span class="s">system&quot;</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">order_items</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Line</span><span class="nv"> </span><span class="s">items</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">each</span><span class="nv"> </span><span class="s">order&quot;</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stores</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Physical</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">online</span><span class="nv"> </span><span class="s">store</span><span class="nv"> </span><span class="s">locations&quot;</span>
+</code></pre></div>
+<h3 id="step-2-build-staging-models">Step 2: Build Staging Models</h3>
+<p>Staging models are the first transformation layer. They perform light cleaning and renaming but preserve the grain of source data. This isolation means source system changes only require updates in one place.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- models/staging/ecommerce/stg_ecommerce__customers.sql</span>
+
+<span class="k">with</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">source</span><span class="p">(</span><span class="s1">&#39;ecommerce_raw&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;customers&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+<span class="p">),</span>
+
+<span class="n">renamed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span>
+<span class="w">        </span><span class="c1">-- Preserve source system identifier for lineage</span>
+<span class="w">        </span><span class="n">customer_id</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Standardize naming conventions to snake_case</span>
+<span class="w">        </span><span class="n">first_name</span><span class="p">,</span>
+<span class="w">        </span><span class="n">last_name</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Combine for convenience while keeping components available</span>
+<span class="w">        </span><span class="n">first_name</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">last_name</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">full_name</span><span class="p">,</span>
+
+<span class="w">        </span><span class="n">email_address</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">email</span><span class="p">,</span>
+<span class="w">        </span><span class="n">phone_number</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">phone</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Normalize address components</span>
+<span class="w">        </span><span class="n">billing_address_line_1</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">billing_street_address</span><span class="p">,</span>
+<span class="w">        </span><span class="n">billing_city</span><span class="p">,</span>
+<span class="w">        </span><span class="n">billing_state</span><span class="p">,</span>
+<span class="w">        </span><span class="n">billing_postal_code</span><span class="p">,</span>
+<span class="w">        </span><span class="n">billing_country</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Business attributes that may change over time (SCD candidates)</span>
+<span class="w">        </span><span class="n">loyalty_tier</span><span class="p">,</span><span class="w">                    </span><span class="c1">-- bronze/silver/gold/platinum</span>
+<span class="w">        </span><span class="n">customer_segment</span><span class="p">,</span><span class="w">                </span><span class="c1">-- retail/wholesale/enterprise</span>
+<span class="w">        </span><span class="n">preferred_contact_method</span><span class="p">,</span>
+<span class="w">        </span><span class="n">marketing_opt_in_flag</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">is_marketing_opted_in</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Timestamps for tracking</span>
+<span class="w">        </span><span class="n">account_created_at</span><span class="p">,</span>
+<span class="w">        </span><span class="n">last_login_at</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- ETL metadata</span>
+<span class="w">        </span><span class="n">_etl_loaded_at</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">loaded_at</span>
+
+<span class="w">    </span><span class="k">from</span><span class="w"> </span><span class="k">source</span>
+
+<span class="w">    </span><span class="c1">-- Filter out test accounts that pollute analytics</span>
+<span class="w">    </span><span class="k">where</span><span class="w"> </span><span class="n">email_address</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">like</span><span class="w"> </span><span class="s1">&#39;%@test.internal.com&#39;</span>
+<span class="w">      </span><span class="k">and</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w">  </span><span class="c1">-- Exclude system/placeholder records</span>
+<span class="p">)</span>
+
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">renamed</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">-- models/staging/ecommerce/stg_ecommerce__products.sql</span>
+
+<span class="k">with</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">source</span><span class="p">(</span><span class="s1">&#39;ecommerce_raw&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;products&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+<span class="p">),</span>
+
+<span class="n">renamed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span>
+<span class="w">        </span><span class="n">product_id</span><span class="p">,</span>
+<span class="w">        </span><span class="n">sku</span><span class="p">,</span>
+<span class="w">        </span><span class="n">product_name</span><span class="p">,</span>
+<span class="w">        </span><span class="n">product_description</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Category hierarchy for drill-down analysis</span>
+<span class="w">        </span><span class="n">category_level_1</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">category</span><span class="p">,</span><span class="w">           </span><span class="c1">-- e.g., &quot;Electronics&quot;</span>
+<span class="w">        </span><span class="n">category_level_2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">subcategory</span><span class="p">,</span><span class="w">        </span><span class="c1">-- e.g., &quot;Computers&quot;</span>
+<span class="w">        </span><span class="n">category_level_3</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">product_type</span><span class="p">,</span><span class="w">       </span><span class="c1">-- e.g., &quot;Laptops&quot;</span>
+
+<span class="w">        </span><span class="n">brand_name</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">brand</span><span class="p">,</span>
+<span class="w">        </span><span class="n">supplier_id</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Pricing (changes tracked via SCD)</span>
+<span class="w">        </span><span class="n">unit_cost</span><span class="p">,</span>
+<span class="w">        </span><span class="n">list_price</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Inventory classification</span>
+<span class="w">        </span><span class="n">weight_kg</span><span class="p">,</span>
+<span class="w">        </span><span class="n">is_fragile</span><span class="p">,</span>
+<span class="w">        </span><span class="n">is_hazardous</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Lifecycle flags</span>
+<span class="w">        </span><span class="k">case</span><span class="w"> </span>
+<span class="w">            </span><span class="k">when</span><span class="w"> </span><span class="n">discontinued_at</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="k">true</span>
+<span class="w">            </span><span class="k">else</span><span class="w"> </span><span class="k">false</span>
+<span class="w">        </span><span class="k">end</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">is_discontinued</span><span class="p">,</span>
+
+<span class="w">        </span><span class="n">product_launch_date</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">launched_at</span><span class="p">,</span>
+<span class="w">        </span><span class="n">discontinued_at</span><span class="p">,</span>
+<span class="w">        </span><span class="n">_etl_loaded_at</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">loaded_at</span>
+
+<span class="w">    </span><span class="k">from</span><span class="w"> </span><span class="k">source</span>
+
+<span class="w">    </span><span class="k">where</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">null</span>
+<span class="p">)</span>
+
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">renamed</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">-- models/staging/ecommerce/stg_ecommerce__orders.sql</span>
+
+<span class="k">with</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">source</span><span class="p">(</span><span class="s1">&#39;ecommerce_raw&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;orders&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+<span class="p">),</span>
+
+<span class="n">renamed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span>
+<span class="w">        </span><span class="n">order_id</span><span class="p">,</span>
+<span class="w">        </span><span class="n">customer_id</span><span class="p">,</span>
+<span class="w">        </span><span class="n">store_id</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Order timestamps (critical for fact table partitioning)</span>
+<span class="w">        </span><span class="n">order_placed_at</span><span class="p">,</span>
+<span class="w">        </span><span class="n">order_confirmed_at</span><span class="p">,</span>
+<span class="w">        </span><span class="n">order_shipped_at</span><span class="p">,</span>
+<span class="w">        </span><span class="n">order_delivered_at</span><span class="p">,</span>
+<span class="w">        </span><span class="n">order_cancelled_at</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Derived status for easier filtering</span>
+<span class="w">        </span><span class="k">case</span>
+<span class="w">            </span><span class="k">when</span><span class="w"> </span><span class="n">order_cancelled_at</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="s1">&#39;cancelled&#39;</span>
+<span class="w">            </span><span class="k">when</span><span class="w"> </span><span class="n">order_delivered_at</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="s1">&#39;delivered&#39;</span>
+<span class="w">            </span><span class="k">when</span><span class="w"> </span><span class="n">order_shipped_at</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="s1">&#39;shipped&#39;</span>
+<span class="w">            </span><span class="k">when</span><span class="w"> </span><span class="n">order_confirmed_at</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="s1">&#39;confirmed&#39;</span>
+<span class="w">            </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;pending&#39;</span>
+<span class="w">        </span><span class="k">end</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">order_status</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Financial amounts (stored in cents in source, convert to dollars)</span>
+<span class="w">        </span><span class="n">order_subtotal_cents</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">order_subtotal</span><span class="p">,</span>
+<span class="w">        </span><span class="n">discount_amount_cents</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">discount_amount</span><span class="p">,</span>
+<span class="w">        </span><span class="n">shipping_amount_cents</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">shipping_amount</span><span class="p">,</span>
+<span class="w">        </span><span class="n">tax_amount_cents</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">tax_amount</span><span class="p">,</span>
+<span class="w">        </span><span class="p">(</span><span class="n">order_subtotal_cents</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">shipping_amount_cents</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tax_amount_cents</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">discount_amount_cents</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">order_total</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Order metadata</span>
+<span class="w">        </span><span class="n">order_source_channel</span><span class="p">,</span><span class="w">    </span><span class="c1">-- web/mobile_app/phone/in_store</span>
+<span class="w">        </span><span class="n">promo_code_applied</span><span class="p">,</span>
+<span class="w">        </span><span class="n">shipping_method</span><span class="p">,</span>
+<span class="w">        </span><span class="n">payment_method</span><span class="p">,</span>
+
+<span class="w">        </span><span class="n">_etl_loaded_at</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">loaded_at</span>
+
+<span class="w">    </span><span class="k">from</span><span class="w"> </span><span class="k">source</span>
+<span class="p">)</span>
+
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">renamed</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">-- models/staging/ecommerce/stg_ecommerce__order_items.sql</span>
+
+<span class="k">with</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">source</span><span class="p">(</span><span class="s1">&#39;ecommerce_raw&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;order_items&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+<span class="p">),</span>
+
+<span class="n">renamed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span>
+<span class="w">        </span><span class="n">order_item_id</span><span class="p">,</span>
+<span class="w">        </span><span class="n">order_id</span><span class="p">,</span>
+<span class="w">        </span><span class="n">product_id</span><span class="p">,</span>
+
+<span class="w">        </span><span class="n">quantity</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Pricing at time of purchase (source of truth for revenue)</span>
+<span class="w">        </span><span class="n">unit_price_cents</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">unit_price</span><span class="p">,</span>
+<span class="w">        </span><span class="n">line_discount_cents</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">line_discount</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Calculate line total</span>
+<span class="w">        </span><span class="p">(</span><span class="n">quantity</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">unit_price_cents</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">line_discount_cents</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">line_total</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Fulfillment tracking at line level</span>
+<span class="w">        </span><span class="n">fulfillment_status</span><span class="p">,</span>
+<span class="w">        </span><span class="n">shipped_from_warehouse_id</span><span class="p">,</span>
+
+<span class="w">        </span><span class="n">_etl_loaded_at</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">loaded_at</span>
+
+<span class="w">    </span><span class="k">from</span><span class="w"> </span><span class="k">source</span>
+<span class="p">)</span>
+
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">renamed</span>
+</code></pre></div>
+<h3 id="step-3-implement-scd-type-2-with-dbt-snapshots">Step 3: Implement SCD Type 2 with dbt Snapshots</h3>
+<p>Snapshots are dbt's mechanism for tracking historical changes. When a tracked column changes, dbt closes out the old record (sets <code>dbt_valid_to</code>) and creates a new one. This preserves the complete history of dimensional changes.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- snapshots/snap_customers.sql</span>
+
+<span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="n">snapshot</span><span class="w"> </span><span class="n">snap_customers</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+
+<span class="err">{{</span>
+<span class="w">    </span><span class="n">config</span><span class="p">(</span>
+<span class="w">        </span><span class="c1">-- Target location for snapshot table</span>
+<span class="w">        </span><span class="n">target_database</span><span class="o">=</span><span class="s1">&#39;analytics&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">target_schema</span><span class="o">=</span><span class="s1">&#39;snapshots&#39;</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Unique identifier from source - must be truly unique and stable</span>
+<span class="w">        </span><span class="n">unique_key</span><span class="o">=</span><span class="s1">&#39;customer_id&#39;</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Track changes using a timestamp column from source</span>
+<span class="w">        </span><span class="c1">-- Alternative: strategy=&#39;check&#39; with check_cols for systems without reliable timestamps</span>
+<span class="w">        </span><span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">updated_at</span><span class="o">=</span><span class="s1">&#39;loaded_at&#39;</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Columns to invalidate old record when changed</span>
+<span class="w">        </span><span class="c1">-- Be selective: only track columns where history matters for analysis</span>
+<span class="w">        </span><span class="n">invalidate_hard_deletes</span><span class="o">=</span><span class="k">true</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="err">}}</span>
+
+<span class="k">select</span>
+<span class="w">    </span><span class="n">customer_id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">full_name</span><span class="p">,</span>
+<span class="w">    </span><span class="n">email</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- These are the SCD-tracked attributes</span>
+<span class="w">    </span><span class="c1">-- Changes here create new historical records</span>
+<span class="w">    </span><span class="n">loyalty_tier</span><span class="p">,</span>
+<span class="w">    </span><span class="n">customer_segment</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- Include geographic attributes for regional analysis over time</span>
+<span class="w">    </span><span class="n">billing_city</span><span class="p">,</span>
+<span class="w">    </span><span class="n">billing_state</span><span class="p">,</span>
+<span class="w">    </span><span class="n">billing_country</span><span class="p">,</span>
+
+<span class="w">    </span><span class="n">is_marketing_opted_in</span><span class="p">,</span>
+<span class="w">    </span><span class="n">account_created_at</span><span class="p">,</span>
+<span class="w">    </span><span class="n">loaded_at</span>
+
+<span class="k">from</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">ref</span><span class="p">(</span><span class="s1">&#39;stg_ecommerce__customers&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+
+<span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="n">endsnapshot</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">-- snapshots/snap_products.sql</span>
+
+<span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="n">snapshot</span><span class="w"> </span><span class="n">snap_products</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+
+<span class="err">{{</span>
+<span class="w">    </span><span class="n">config</span><span class="p">(</span>
+<span class="w">        </span><span class="n">target_database</span><span class="o">=</span><span class="s1">&#39;analytics&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">target_schema</span><span class="o">=</span><span class="s1">&#39;snapshots&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">unique_key</span><span class="o">=</span><span class="s1">&#39;product_id&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">updated_at</span><span class="o">=</span><span class="s1">&#39;loaded_at&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">invalidate_hard_deletes</span><span class="o">=</span><span class="k">true</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="err">}}</span>
+
+<span class="k">select</span>
+<span class="w">    </span><span class="n">product_id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">sku</span><span class="p">,</span>
+<span class="w">    </span><span class="n">product_name</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- Category changes are business-critical to track</span>
+<span class="w">    </span><span class="c1">-- Helps answer: &quot;Did reclassifying this product affect sales?&quot;</span>
+<span class="w">    </span><span class="n">category</span><span class="p">,</span>
+<span class="w">    </span><span class="n">subcategory</span><span class="p">,</span>
+<span class="w">    </span><span class="n">product_type</span><span class="p">,</span>
+
+<span class="w">    </span><span class="n">brand</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- Price tracking is essential for margin analysis</span>
+<span class="w">    </span><span class="n">unit_cost</span><span class="p">,</span>
+<span class="w">    </span><span class="n">list_price</span><span class="p">,</span>
+
+<span class="w">    </span><span class="n">is_discontinued</span><span class="p">,</span>
+<span class="w">    </span><span class="n">launched_at</span><span class="p">,</span>
+<span class="w">    </span><span class="n">loaded_at</span>
+
+<span class="k">from</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">ref</span><span class="p">(</span><span class="s1">&#39;stg_ecommerce__products&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+
+<span class="err">{</span><span class="o">%</span><span class="w"> </span><span class="n">endsnapshot</span><span class="w"> </span><span class="o">%</span><span class="err">}</span>
+</code></pre></div>
+<h3 id="step-4-build-dimension-tables-with-surrogate-keys">Step 4: Build Dimension Tables with Surrogate Keys</h3>
+<p>Dimension tables wrap snapshots with surrogate keys and user-friendly validity columns. Surrogate keys insulate your fact tables from source system key changes and enable efficient joins.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- models/marts/core/dim_customers.sql</span>
+
+<span class="err">{{</span>
+<span class="w">    </span><span class="n">config</span><span class="p">(</span>
+<span class="w">        </span><span class="n">materialized</span><span class="o">=</span><span class="s1">&#39;table&#39;</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Cluster on commonly filtered columns for query performance</span>
+<span class="w">        </span><span class="n">cluster_by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;customer_segment&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;billing_country&#39;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="err">}}</span>
+
+<span class="k">with</span><span class="w"> </span><span class="n">snapshot_data</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">ref</span><span class="p">(</span><span class="s1">&#39;snap_customers&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span>
+<span class="p">),</span>
+
+<span class="c1">-- Add surrogate key and clean up snapshot metadata columns</span>
+<span class="n">dimensionalized</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">select</span>
+<span class="w">        </span><span class="c1">-- Generate a stable surrogate key from business key + validity window</span>
+<span class="w">        </span><span class="c1">-- This key is what fact tables will reference</span>
+<span class="w">        </span><span class="err">{{</span><span class="w"> </span><span class="n">dbt_utils</span><span class="p">.</span><span class="n">generate_surrogate_key</span><span class="p">([</span><span class="s1">&#39;customer_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;dbt_valid_from&#39;</span><span class="p">])</span><span class="w"> </span><span class="err">}}</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">customer_sk</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Natural key preserved for debugging and late-arriving facts</span>
+<span class="w">        </span><span class="n">customer_id</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">customer_nk</span><span class="p">,</span>
+
+<span class="w">        </span><span class="n">full_name</span><span class="p">,</span>
+<span class="w">        </span><span class="n">email</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- SCD-tracked attributes</span>
+<span class="w">        </span><span class="n">loyalty_tier</span><span class="p">,</span>
+<span class="w">        </span><span class="n">customer_segment</span><span class="p">,</span>
+<span class="w">        </span><span class="n">billing_city</span><span class="p">,</span>
+<span class="w">        </span><span class="n">billing_state</span><span class="p">,</span>
+<span class="w">        </span><span class="n">billing_country</span><span class="p">,</span>
+<span class="w">        </span><span class="n">is_marketing_opted_in</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Customer lifecycle metrics</span>
+<span class="w">        </span><span class="n">account_created_at</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- SCD Type 2 validity columns with user-friendly naming</span>
+<span class="w">        </span><span class="n">dbt_valid_from</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">valid_from</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Replace NULL (current record) with far-future date for easier filtering</span>
+<span class="w">        </span><span class="k">coalesce</span><span class="p">(</span><span class="n">dbt_valid_to</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;9999-12-31&#39;</span><span class="p">::</span><span class="k">timestamp</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">valid_to</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Boolean flag for current record - simplifies most queries</span>
+<span class="w">        </span><span class="k">case</span><span class="w"> </span>
+<span class="w">            </span><span class="k">when</span><span class="w"> </span><span class="n">dbt_valid_to</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="k">true</span><span class="w"> </span>
+<span class="w">            </span><span class="k">else</span><span class="w"> </span><span class="k">false</span><span class="w"> </span>
+<span class="w">        </span><span class="k">end</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">is_current</span><span class="p">,</span>
+
+<span class="w">        </span><span class="c1">-- Row metadata for debugging</span>
+<span class="w">        </span><span class="n">dbt_scd_id</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">scd_hash</span><span class="p">,</span>
+<span class="w">        </span><span class="n">dbt_updated_at</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">snapshot_updated_at</span>
+
+<span class="w">    </span><span class="k">from</span><span class="w"> </span><span class="n">snapshot_data</span>
+<span class="p">)</span>
+
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">dimensionalized</span>
+</code></pre></div>
+<p>```sql
+-- models/marts/core/dim_products.sql</p>
+<p>{{
+    config(
+        materialized='table',
+        cluster_by=['category', 'brand']
+    )
+}}</p>
+<p>with snapshot_data as (
+    select * from {{ ref('snap_products') }}
+),</p>
+<p>dimensionalized as (
+    select
+        {{ dbt_utils.generate_surrogate_key(['product_id', 'dbt_valid_from']) }} as product_sk,
+        product_id as product_nk,</p>
+<div class="highlight"><pre><span></span><code>    sku,
+    product_name,
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
