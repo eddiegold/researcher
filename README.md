@@ -98,3 +98,6 @@ Input: "dbt"
 brew install direnv
 # add `eval "$(direnv hook zsh)"` to .zshrc
 # then put your keys in .envrc inside the project folder
+# researcher
+
+
