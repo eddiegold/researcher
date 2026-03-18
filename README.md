@@ -100,4 +100,3 @@ brew install direnv
 # then put your keys in .envrc inside the project folder
 # researcher
 
-
