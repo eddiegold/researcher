@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOCKS — Concurrency & Distributed Locking Reference</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080b10;
+    --surface: #0d1117;
+    --surface2: #131920;
+    --border: rgba(255,255,255,0.06);
+
+    --L: #38bdf8;
+    --O: #34d399;
+    --C: #fb923c;
+    --K: #a78bfa;
+    --S: #f472b6;
+
+    --mutex:      #38bdf8;
+    --rwlock:     #34d399;
+    --spinlock:   #fb923c;
+    --semaphore:  #a78bfa;
+    --reentrant:  #f472b6;
+    --optimistic: #4ade80;
+    --pessimistic:#fbbf24;
+    --distrib:    #60a5fa;
+    --redlock:    #f87171;
+    --zk:         #c084fc;
+
+    --text: #dde6f0;
+    --muted: #506070;
+    --subtle: #1e2d3d;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.022) 1px, transparent 1px);
+    background-size: 52px 52px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 56px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 44px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(64px, 13vw, 104px);
+    letter-spacing: -0.04em;
+    line-height: 0.88;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .title span { display: inline-block; animation: popIn 0.5s ease both; }
+  .title span:nth-child(1) { color: var(--L); animation-delay: 0.05s; text-shadow: 0 0 50px color-mix(in srgb, var(--L) 60%, transparent); }
+  .title span:nth-child(2) { color: var(--O); animation-delay: 0.12s; text-shadow: 0 0 50px color-mix(in srgb, var(--O) 60%, transparent); }
+  .title span:nth-child(3) { color: var(--C); animation-delay: 0.19s; text-shadow: 0 0 50px color-mix(in srgb, var(--C) 60%, transparent); }
+  .title span:nth-child(4) { color: var(--K); animation-delay: 0.26s; text-shadow: 0 0 50px color-mix(in srgb, var(--K) 60%, transparent); }
+  .title span:nth-child(5) { color: var(--S); animation-delay: 0.33s; text-shadow: 0 0 50px color-mix(in srgb, var(--S) 60%, transparent); }
+
+  .subtitle { font-size: 14px; color: var(--muted); font-weight: 300; letter-spacing: 0.01em; margin-top: 12px; }
+
+  /* ACRONYM BAR */
+  .acronym-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 52px;
+    animation: fadeDown 0.6s 0.25s ease both;
+    opacity: 0;
+    animation-fill-mode: both;
+  }
+
+  .acronym-pill {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 16px;
+    cursor: default;
+    transition: border-color 0.2s, transform 0.15s, background 0.2s;
+    min-width: 150px;
+    flex: 1;
+    max-width: 200px;
+  }
+  .acronym-pill:hover {
+    border-color: var(--pill-color);
+    background: color-mix(in srgb, var(--pill-color) 7%, var(--surface));
+    transform: translateY(-2px);
+  }
+  .pill-letter { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 24px; color: var(--pill-color); line-height: 1; flex-shrink: 0; }
+  .pill-body { display: flex; flex-direction: column; }
+  .pill-word { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.25; }
+  .pill-desc { font-size: 10.5px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.02em; margin-top: 2px; }
+
+  /* SECTION DIVIDER */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    margin-top: 48px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* LOCK CARDS */
+  .locks { display: flex; flex-direction: column; gap: 12px; }
+
+  .lock {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    animation: fadeUp 0.5s ease both;
+    animation-fill-mode: both;
+  }
+  .lock:hover { transform: translateX(3px); }
+  .lock.open { border-color: var(--lock-color); }
+  .lock:nth-child(1) { animation-delay: 0.05s; }
+  .lock:nth-child(2) { animation-delay: 0.10s; }
+  .lock:nth-child(3) { animation-delay: 0.15s; }
+  .lock:nth-child(4) { animation-delay: 0.20s; }
+  .lock:nth-child(5) { animation-delay: 0.25s; }
+
+  .lock-header { display: flex; align-items: center; gap: 16px; padding: 18px 22px; }
+
+  .lock-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--lock-color) 11%, transparent);
+    border: 1px solid color-mix(in srgb, var(--lock-color) 28%, transparent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+
+  .lock-meta { flex: 1; min-width: 0; }
+  .lock-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; color: var(--text); margin-bottom: 3px; }
+  .lock-tagline { font-size: 12px; color: var(--muted); font-weight: 300; }
+
+  .lock-badges { display: flex; gap: 6px; flex-shrink: 0; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+
+  .badge { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 20px; border: 1px solid; white-space: nowrap; }
+  .badge-scope { color: var(--lock-color); border-color: color-mix(in srgb, var(--lock-color) 32%, transparent); background: color-mix(in srgb, var(--lock-color) 8%, transparent); }
+  .badge-perf { color: var(--muted); border-color: var(--border); background: var(--surface2); }
+
+  .lock-chevron { width: 18px; height: 18px; color: var(--muted); transition: transform 0.25s ease; flex-shrink: 0; }
+  .lock.open .lock-chevron { transform: rotate(180deg); }
+
+  .lock-body { max-height: 0; overflow: hidden; transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1); }
+  .lock.open .lock-body { max-height: 1800px; }
+
+  .lock-content {
+    padding: 0 22px 22px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 600px) { .lock-content { grid-template-columns: 1fr; } }
+
+  .content-block { background: var(--surface2); border-radius: 10px; padding: 14px 16px; }
+  .block-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--lock-color); margin-bottom: 11px; opacity: 0.85; }
+
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+  .checklist li { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; line-height: 1.55; color: rgba(221,230,240,0.82); }
+  .checklist li::before { content: '→'; color: var(--lock-color); font-family: 'DM Mono', monospace; font-size: 10px; margin-top: 3px; flex-shrink: 0; opacity: 0.6; }
+  .checklist li strong { color: var(--text); font-weight: 500; }
+
+  .tip-box { grid-column: 1 / -1; background: color-mix(in srgb, var(--lock-color) 7%, transparent); border: 1px solid color-mix(in srgb, var(--lock-color) 22%, transparent); border-radius: 10px; padding: 13px 16px; display: flex; gap: 11px; align-items: flex-start; }
+  .tip-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .tip-text { font-size: 12.5px; color: color-mix(in srgb, var(--lock-color) 80%, white); line-height: 1.6; }
+  .tip-text strong { color: var(--lock-color); font-weight: 600; }
+
+  .code-snippet { grid-column: 1 / -1; background: #050c12; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
+  .code-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; }
+  .code-snippet pre { font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.75; color: #8bafc8; white-space: pre; }
+  .kw  { color: #38bdf8; }
+  .fn  { color: #34d399; }
+  .cm  { color: #2e4055; font-style: italic; }
+  .str { color: #fb923c; }
+  .num { color: #a78bfa; }
+  .tp  { color: #f472b6; }
+
+  .compare-row { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+  .compare-chip { display: flex; flex-direction: column; flex: 1; min-width: 90px; background: var(--surface2); border-radius: 8px; padding: 10px 12px; border: 1px solid var(--border); gap: 4px; }
+  .chip-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .chip-val { font-size: 12px; font-weight: 500; color: var(--lock-color); }
+
+  /* DECISION MATRIX */
+  .matrix { margin-top: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; animation: fadeUp 0.5s 0.5s ease both; animation-fill-mode: both; }
+  .matrix-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); padding: 14px 18px 12px; border-bottom: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; text-align: left; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  td { font-size: 12.5px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.03); color: rgba(221,230,240,0.78); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+  td:first-child { font-weight: 600; color: var(--text); white-space: nowrap; }
+  .g { color: #34d399; } .y { color: #fbbf24; } .r { color: #f87171; }
+
+  /* SENIOR INSIGHTS */
+  .insights { margin-top: 12px; animation: fadeUp 0.5s 0.5s ease both; animation-fill-mode: both; }
+  .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .insights-grid { grid-template-columns: 1fr; } }
+
+  .insight-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; transition: border-color 0.2s, transform 0.15s; }
+  .insight-card:hover { border-color: rgba(251,191,36,0.3); transform: translateY(-2px); }
+  .insight-card.full { grid-column: 1 / -1; }
+
+  .insight-number { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; color: rgba(251,191,36,0.18); line-height: 1; margin-bottom: 8px; }
+  .insight-heading { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: #fbbf24; margin-bottom: 8px; }
+  .insight-body { font-size: 13px; color: rgba(221,230,240,0.72); line-height: 1.65; }
+  .insight-body strong { color: var(--text); font-weight: 500; }
+
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(14px); }  to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn    { from { opacity: 0; transform: scale(0.65) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="label">Concurrency &amp; Distributed Systems — Interview Reference</div>
+    <div class="title">
+      <span>L</span><span>O</span><span>C</span><span>K</span><span>S</span>
+    </div>
+    <div class="subtitle">Every locking primitive from a single thread to a global cluster</div>
+  </div>
+
+  <!-- ACRONYM BAR -->
+  <div class="acronym-bar">
+    <div class="acronym-pill" style="--pill-color: var(--L)">
+      <div class="pill-letter">L</div>
+      <div class="pill-body">
+        <span class="pill-word">Local Primitives</span>
+        <span class="pill-desc">mutex · rwlock · spin</span>
+      </div>
+    </div>
+    <div class="acronym-pill" style="--pill-color: var(--O)">
+      <div class="pill-letter">O</div>
+      <div class="pill-body">
+        <span class="pill-word">Ownership Model</span>
+        <span class="pill-desc">who holds, who waits</span>
+      </div>
+    </div>
+    <div class="acronym-pill" style="--pill-color: var(--C)">
+      <div class="pill-letter">C</div>
+      <div class="pill-body">
+        <span class="pill-word">Contention Strategy</span>
+        <span class="pill-desc">optimistic vs pessimistic</span>
+      </div>
+    </div>
+    <div class="acronym-pill" style="--pill-color: var(--K)">
+      <div class="pill-letter">K</div>
+      <div class="pill-body">
+        <span class="pill-word">Koordinated Dist.</span>
+        <span class="pill-desc">redis · zookeeper · etcd</span>
+      </div>
+    </div>
+    <div class="acronym-pill" style="--pill-color: var(--S)">
+      <div class="pill-letter">S</div>
+      <div class="pill-body">
+        <span class="pill-word">Senior Insights</span>
+        <span class="pill-desc">tradeoffs &amp; pitfalls</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ L — LOCAL PRIMITIVES ══ -->
+  <div class="section-label">L — Local Primitives &nbsp;·&nbsp; in-process concurrency</div>
+  <div class="locks">
+
+    <!-- 1. MUTEX -->
+    <div class="lock" style="--lock-color: var(--mutex)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">🔒</div>
+        <div class="lock-meta">
+          <div class="lock-name">Mutex (Mutual Exclusion Lock)</div>
+          <div class="lock-tagline">One owner at a time — the fundamental building block</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">single-process</span>
+          <span class="badge badge-perf">blocking</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works</div>
+            <ul class="checklist">
+              <li>Binary state: <strong>locked</strong> or <strong>unlocked</strong></li>
+              <li>Only the thread that acquired it can release it (ownership)</li>
+              <li>All other threads block (sleep) in a wait queue until freed</li>
+              <li>OS scheduler wakes a waiting thread on release</li>
+              <li>Recursive variant allows same thread to re-acquire without deadlock</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use</div>
+            <ul class="checklist">
+              <li>Protecting shared mutable state (counters, maps, caches)</li>
+              <li>Short critical sections with low contention</li>
+              <li>Any time you need <strong>exclusive write access</strong></li>
+              <li>Connection pool slot management</li>
+              <li><strong>Avoid:</strong> long I/O or DB calls inside the critical section</li>
+            </ul>
+          </div>
+          <div class="compare-row">
+            <div class="compare-chip"><span class="chip-label">Granularity</span><span class="chip-val">Exclusive</span></div>
+            <div class="compare-chip"><span class="chip-label">Blocking</span><span class="chip-val">Yes (sleep)</span></div>
+            <div class="compare-chip"><span class="chip-label">Fairness</span><span class="chip-val">OS-dependent</span></div>
+            <div class="compare-chip"><span class="chip-label">Overhead</span><span class="chip-val">Low–Medium</span></div>
+          </div>
+          <div class="code-snippet">
+            <div class="code-label">Go · sync.Mutex</div>
+<pre><span class="kw">var</span> mu      sync.Mutex
+<span class="kw">var</span> counter <span class="kw">int</span>
+
+<span class="fn">func</span> increment() {
+    mu.<span class="fn">Lock</span>()
+    <span class="kw">defer</span> mu.<span class="fn">Unlock</span>()  <span class="cm">// always defer — never forget to unlock</span>
+    counter++
+}</pre>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">⚡</span>
+            <div class="tip-text"><strong>Classic deadlock: lock inversion.</strong> Thread A holds Lock 1, waits for Lock 2. Thread B holds Lock 2, waits for Lock 1. Fix: always acquire multiple locks in a consistent global order across your entire codebase.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. READ-WRITE LOCK -->
+    <div class="lock" style="--lock-color: var(--rwlock)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">📖</div>
+        <div class="lock-meta">
+          <div class="lock-name">Read-Write Lock (RWMutex)</div>
+          <div class="lock-tagline">Many concurrent readers OR one exclusive writer — never both</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">single-process</span>
+          <span class="badge badge-perf">read-optimized</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works</div>
+            <ul class="checklist">
+              <li>Multiple goroutines/threads can hold a <strong>read lock simultaneously</strong></li>
+              <li>A <strong>write lock</strong> is exclusive — blocks all readers and writers</li>
+              <li>New readers are blocked once a writer is waiting (writer preference)</li>
+              <li>Writers wait until all active readers release</li>
+              <li>Internally tracks a reader count + a writer-pending flag</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use</div>
+            <ul class="checklist">
+              <li>Read-heavy workloads: config maps, in-memory caches, routing tables</li>
+              <li>Writes are rare — e.g. config reload once per minute</li>
+              <li><strong>Rule of thumb:</strong> reads &gt; 80% of all accesses</li>
+              <li>Not worth it when reads and writes are balanced — plain Mutex is simpler</li>
+            </ul>
+          </div>
+          <div class="compare-row">
+            <div class="compare-chip"><span class="chip-label">Read concurrency</span><span class="chip-val">Unlimited</span></div>
+            <div class="compare-chip"><span class="chip-label">Write concurrency</span><span class="chip-val">Exclusive</span></div>
+            <div class="compare-chip"><span class="chip-label">Write starvation</span><span class="chip-val">Possible</span></div>
+            <div class="compare-chip"><span class="chip-label">Overhead vs Mutex</span><span class="chip-val">Higher</span></div>
+          </div>
+          <div class="code-snippet">
+            <div class="code-label">Go · sync.RWMutex</div>
+<pre><span class="kw">var</span> rw    sync.RWMutex
+<span class="kw">var</span> cache <span class="kw">map</span>[<span class="kw">string</span>]<span class="kw">string</span>
+
+<span class="fn">func</span> read(key <span class="kw">string</span>) <span class="kw">string</span> {
+    rw.<span class="fn">RLock</span>()
+    <span class="kw">defer</span> rw.<span class="fn">RUnlock</span>()
+    <span class="kw">return</span> cache[key]
+}
+<span class="fn">func</span> write(key, val <span class="kw">string</span>) {
+    rw.<span class="fn">Lock</span>()
+    <span class="kw">defer</span> rw.<span class="fn">Unlock</span>()
+    cache[key] = val
+}</pre>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">⚠️</span>
+            <div class="tip-text"><strong>Never upgrade an RLock to a full Lock in the same goroutine</strong> — that's an instant deadlock. Also: continuous reads can starve writers indefinitely. Most runtimes (Go, Java) implement writer-preference to prevent this, but verify your platform's behavior.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. SPINLOCK -->
+    <div class="lock" style="--lock-color: var(--spinlock)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">🌀</div>
+        <div class="lock-meta">
+          <div class="lock-name">Spinlock</div>
+          <div class="lock-tagline">Busy-wait in a tight loop — no sleep, no context switch</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">single-process</span>
+          <span class="badge badge-perf">CPU-burning</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works</div>
+            <ul class="checklist">
+              <li>Uses an atomic CAS (compare-and-swap) instruction in a loop</li>
+              <li>Thread repeatedly checks the flag — <strong>never yields the CPU</strong></li>
+              <li>No OS involvement; no thread context switch overhead (~1–10µs saved)</li>
+              <li>If lock is free → acquired in nanoseconds</li>
+              <li>If lock is held → burns CPU until it's released</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use</div>
+            <ul class="checklist">
+              <li>Critical section is <strong>extremely short</strong> (&lt; ~100ns)</li>
+              <li>OS context switch cost (&gt;1µs) would dominate the actual work</li>
+              <li>Kernel code, interrupt handlers, lock-free data structures internals</li>
+              <li><strong>Never</strong> in user-space with long or I/O critical sections</li>
+              <li><strong>Never</strong> on a single-CPU system — will livelock forever</li>
+            </ul>
+          </div>
+          <div class="compare-row">
+            <div class="compare-chip"><span class="chip-label">Latency</span><span class="chip-val">~nanoseconds</span></div>
+            <div class="compare-chip"><span class="chip-label">CPU while waiting</span><span class="chip-val">100%</span></div>
+            <div class="compare-chip"><span class="chip-label">Context switch</span><span class="chip-val">None</span></div>
+            <div class="compare-chip"><span class="chip-label">Best for</span><span class="chip-val">Kernel / RT</span></div>
+          </div>
+          <div class="code-snippet">
+            <div class="code-label">Go · atomic spinlock pattern</div>
+<pre><span class="kw">import</span> <span class="str">"sync/atomic"</span>
+
+<span class="kw">type</span> <span class="tp">SpinLock</span> <span class="kw">struct</span>{ state <span class="kw">int32</span> }
+
+<span class="fn">func</span> (s *<span class="tp">SpinLock</span>) <span class="fn">Lock</span>() {
+    <span class="kw">for</span> !atomic.<span class="fn">CompareAndSwapInt32</span>(&amp;s.state, <span class="num">0</span>, <span class="num">1</span>) {
+        runtime.<span class="fn">Gosched</span>()  <span class="cm">// yield to avoid starvation on cooperative schedulers</span>
+    }
+}
+<span class="fn">func</span> (s *<span class="tp">SpinLock</span>) <span class="fn">Unlock</span>() { atomic.<span class="fn">StoreInt32</span>(&amp;s.state, <span class="num">0</span>) }</pre>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">🔥</span>
+            <div class="tip-text"><strong>Adaptive spinlocks</strong> (Linux kernel, JVM HotSpot) spin briefly then fall back to sleeping. This gets the best of both worlds: nanosecond acquisition when uncontended, no CPU waste under load. Java's <code>synchronized</code> does this automatically via biased locking → thin lock → inflated lock progression.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ O — OWNERSHIP MODEL ══ -->
+  <div class="section-label">O — Ownership Model &nbsp;·&nbsp; counting &amp; reentrance</div>
+  <div class="locks">
+
+    <!-- 4. SEMAPHORE -->
+    <div class="lock" style="--lock-color: var(--semaphore)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">🎛️</div>
+        <div class="lock-meta">
+          <div class="lock-name">Semaphore</div>
+          <div class="lock-tagline">Counting lock — controls access to a pool of N resources</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">single-process</span>
+          <span class="badge badge-perf">counting</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works</div>
+            <ul class="checklist">
+              <li>Maintains an integer counter N (initial capacity)</li>
+              <li><strong>Acquire / Wait (P):</strong> decrements counter; blocks if counter = 0</li>
+              <li><strong>Release / Signal (V):</strong> increments counter; wakes a blocked goroutine</li>
+              <li>Binary semaphore (N=1) ≈ Mutex but <strong>without ownership</strong> — any thread can release</li>
+              <li>Counting semaphore (N&gt;1) allows exactly N concurrent accesses</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use</div>
+            <ul class="checklist">
+              <li>Limiting concurrent DB connections or HTTP workers to exactly N</li>
+              <li>Rate-limiting goroutines in a bounded worker pool</li>
+              <li>Producer-consumer synchronization (buffer slot counting)</li>
+              <li>Throttling outbound calls to a third-party rate-limited API</li>
+              <li><strong>Key insight:</strong> no ownership makes cross-goroutine signaling natural</li>
+            </ul>
+          </div>
+          <div class="compare-row">
+            <div class="compare-chip"><span class="chip-label">Max concurrent</span><span class="chip-val">N (configurable)</span></div>
+            <div class="compare-chip"><span class="chip-label">Ownership</span><span class="chip-val">None</span></div>
+            <div class="compare-chip"><span class="chip-label">Use case</span><span class="chip-val">Resource pool</span></div>
+            <div class="compare-chip"><span class="chip-label">Blocking</span><span class="chip-val">Yes (sleep)</span></div>
+          </div>
+          <div class="code-snippet">
+            <div class="code-label">Go · semaphore via buffered channel</div>
+<pre><span class="cm">// Limit to 10 concurrent DB connections</span>
+sem := <span class="fn">make</span>(<span class="kw">chan</span> <span class="kw">struct</span>{}, <span class="num">10</span>)
+
+<span class="fn">func</span> queryDB() {
+    sem &lt;- <span class="kw">struct</span>{}{}         <span class="cm">// acquire a slot</span>
+    <span class="kw">defer func</span>() { &lt;-sem }()  <span class="cm">// release on return</span>
+    <span class="cm">// ... do the query</span>
+}</pre>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <div class="tip-text"><strong>Semaphore ≠ Mutex.</strong> The key interview distinction: "Can the releaser be a different goroutine than the acquirer?" If yes → semaphore. If no → mutex. Semaphores model resource availability; mutexes model data ownership. Confusing them is a classic concurrency bug.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. REENTRANT LOCK -->
+    <div class="lock" style="--lock-color: var(--reentrant)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">🔁</div>
+        <div class="lock-meta">
+          <div class="lock-name">Reentrant Lock (Recursive Mutex)</div>
+          <div class="lock-tagline">Same thread can lock again without deadlocking itself</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">single-process</span>
+          <span class="badge badge-perf">recursive</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works</div>
+            <ul class="checklist">
+              <li>Tracks the owning thread ID + a recursion depth counter</li>
+              <li>If the <strong>same thread</strong> calls Lock() again → depth increments, no block</li>
+              <li>Unlock() decrements depth; lock fully releases only when depth hits 0</li>
+              <li>A different thread still blocks normally</li>
+              <li>Java's <code>synchronized</code> keyword and <code>ReentrantLock</code> work this way</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use</div>
+            <ul class="checklist">
+              <li>Recursive algorithms that internally call other locked methods</li>
+              <li>OO code where a public method calls another locked method on the same object</li>
+              <li>Legacy codebases where lock boundaries are tangled</li>
+              <li><strong>Caution:</strong> often masks design issues — prefer refactoring</li>
+              <li>Go deliberately omits this — treats it as an anti-pattern signal</li>
+            </ul>
+          </div>
+          <div class="code-snippet">
+            <div class="code-label">Java · ReentrantLock — recursive acquisition</div>
+<pre><span class="tp">ReentrantLock</span> lock = <span class="kw">new</span> <span class="tp">ReentrantLock</span>();
+
+<span class="kw">void</span> <span class="fn">outer</span>() {
+    lock.<span class="fn">lock</span>();              <span class="cm">// depth: 1</span>
+    <span class="kw">try</span> { <span class="fn">inner</span>(); }          <span class="cm">// safe — same thread re-acquires</span>
+    <span class="kw">finally</span> { lock.<span class="fn">unlock</span>(); } <span class="cm">// depth: 1 → 0 → released</span>
+}
+<span class="kw">void</span> <span class="fn">inner</span>() {
+    lock.<span class="fn">lock</span>();              <span class="cm">// depth: 2</span>
+    <span class="kw">try</span> { <span class="cm">/* work */</span> }
+    <span class="kw">finally</span> { lock.<span class="fn">unlock</span>(); } <span class="cm">// depth: 2 → 1</span>
+}</pre>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">⚠️</span>
+            <div class="tip-text"><strong>Go intentionally has no reentrant mutex.</strong> If you find yourself needing one, it's a strong signal that your locking granularity is too coarse or your call graph is tangled. Prefer passing unlocked data down the call stack, or splitting critical sections into smaller pieces.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ C — CONTENTION STRATEGY ══ -->
+  <div class="section-label">C — Contention Strategy &nbsp;·&nbsp; optimistic vs pessimistic</div>
+  <div class="locks">
+
+    <!-- 6. OPTIMISTIC -->
+    <div class="lock" style="--lock-color: var(--optimistic)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">🎯</div>
+        <div class="lock-meta">
+          <div class="lock-name">Optimistic Locking (CAS / MVCC)</div>
+          <div class="lock-tagline">Assume no conflict — validate at commit, retry if wrong</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">in-process &amp; DB</span>
+          <span class="badge badge-perf">non-blocking</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works</div>
+            <ul class="checklist">
+              <li><strong>Read:</strong> fetch the data + current version/timestamp</li>
+              <li><strong>Modify:</strong> compute new value locally — no lock held during this</li>
+              <li><strong>Validate + Write:</strong> atomically check version hasn't changed, then commit</li>
+              <li>If version changed → conflict → abort and retry from the read step</li>
+              <li>In-process: <code>sync/atomic</code> CAS. In DB: <code>version</code> column or MVCC snapshots</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use</div>
+            <ul class="checklist">
+              <li>Low-contention workloads — conflicts are the exception</li>
+              <li>Read-heavy; writes are occasional and quick</li>
+              <li>Lock-free counters, accumulators, atomic flags in hot paths</li>
+              <li>DB row updates where concurrent edits are uncommon</li>
+              <li><strong>Avoid:</strong> high-contention write storms — retry loops thrash CPU and DB</li>
+            </ul>
+          </div>
+          <div class="compare-row">
+            <div class="compare-chip"><span class="chip-label">Blocking</span><span class="chip-val">None</span></div>
+            <div class="compare-chip"><span class="chip-label">On conflict</span><span class="chip-val">Retry</span></div>
+            <div class="compare-chip"><span class="chip-label">Low contention</span><span class="chip-val">High throughput</span></div>
+            <div class="compare-chip"><span class="chip-label">High contention</span><span class="chip-val">Degrades badly</span></div>
+          </div>
+          <div class="code-snippet">
+            <div class="code-label">Go · CAS loop &nbsp;|&nbsp; SQL · version column</div>
+<pre><span class="cm">// In-process: atomic CAS loop</span>
+<span class="kw">for</span> {
+    old := atomic.<span class="fn">LoadInt64</span>(&amp;val)
+    <span class="kw">if</span> atomic.<span class="fn">CompareAndSwapInt64</span>(&amp;val, old, old+<span class="num">1</span>) { <span class="kw">break</span> }
+    <span class="cm">// conflict — loop and retry</span>
+}
+
+<span class="cm">-- DB: version column optimistic lock</span>
+<span class="kw">UPDATE</span> orders <span class="kw">SET</span> status=<span class="str">'shipped'</span>, version=version+<span class="num">1</span>
+<span class="kw">WHERE</span> id=<span class="num">42</span> <span class="kw">AND</span> version=<span class="num">7</span>;
+<span class="cm">-- 0 rows affected = conflict → re-read and retry</span></pre>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <div class="tip-text"><strong>MVCC in Postgres is optimistic locking at the engine level.</strong> Readers never block writers; each transaction sees a consistent snapshot. This is why Postgres reads scale so well — no read lock to acquire. The tradeoff: vacuum overhead from accumulating old row versions (dead tuples).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. PESSIMISTIC -->
+    <div class="lock" style="--lock-color: var(--pessimistic)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">🛡️</div>
+        <div class="lock-meta">
+          <div class="lock-name">Pessimistic Locking</div>
+          <div class="lock-tagline">Assume conflict — lock before reading, hold until done</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">DB / in-process</span>
+          <span class="badge badge-perf">blocking</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works</div>
+            <ul class="checklist">
+              <li>Acquire an exclusive lock <strong>before reading</strong> the data</li>
+              <li>Hold the lock through the entire read-modify-write cycle</li>
+              <li>Other transactions block until the lock is released on COMMIT/ROLLBACK</li>
+              <li>In SQL: <code>SELECT ... FOR UPDATE</code> acquires a row-level exclusive lock</li>
+              <li>Conflict is impossible — serialization is guaranteed</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use</div>
+            <ul class="checklist">
+              <li><strong>High-contention rows</strong> — conflicts are frequent</li>
+              <li>Inventory / seat booking — must prevent oversell</li>
+              <li>Financial ledger updates — correctness over throughput</li>
+              <li>Long read-modify-write cycles where retries are expensive</li>
+              <li><strong>Avoid:</strong> high-read rows — blocks every concurrent reader</li>
+            </ul>
+          </div>
+          <div class="compare-row">
+            <div class="compare-chip"><span class="chip-label">Conflict risk</span><span class="chip-val">Eliminated</span></div>
+            <div class="compare-chip"><span class="chip-label">Concurrency</span><span class="chip-val">Reduced</span></div>
+            <div class="compare-chip"><span class="chip-label">Deadlock risk</span><span class="chip-val">Yes</span></div>
+            <div class="compare-chip"><span class="chip-label">Retry needed</span><span class="chip-val">No</span></div>
+          </div>
+          <div class="code-snippet">
+            <div class="code-label">SQL · SELECT FOR UPDATE — row-level exclusive lock</div>
+<pre><span class="kw">BEGIN</span>;
+
+<span class="cm">-- Acquire row-level exclusive lock immediately</span>
+<span class="kw">SELECT</span> quantity <span class="kw">FROM</span> inventory
+<span class="kw">WHERE</span> sku = <span class="str">'ABC'</span> <span class="kw">FOR UPDATE</span>;   <span class="cm">-- blocks concurrent writers</span>
+
+<span class="cm">-- Safe to modify — no race condition possible</span>
+<span class="kw">UPDATE</span> inventory
+   <span class="kw">SET</span> quantity = quantity - <span class="num">1</span>
+ <span class="kw">WHERE</span> sku = <span class="str">'ABC'</span>;
+
+<span class="kw">COMMIT</span>;  <span class="cm">-- lock released here</span></pre>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">⚡</span>
+            <div class="tip-text"><strong>DB deadlock detection is automatic but expensive.</strong> Postgres detects deadlocks via wait-for graph cycle detection and kills one transaction. Always catch deadlock errors (error code 40P01) and retry the entire transaction. Keep transactions short and lock rows in a consistent order to minimize deadlock frequency.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ K — KOORDINATED / DISTRIBUTED ══ -->
+  <div class="section-label">K — Koordinated &nbsp;·&nbsp; distributed locking across nodes</div>
+  <div class="locks">
+
+    <!-- 8. REDIS SETNX -->
+    <div class="lock" style="--lock-color: var(--distrib)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">🗝️</div>
+        <div class="lock-meta">
+          <div class="lock-name">Distributed Lock — Redis SET NX</div>
+          <div class="lock-tagline">Single-node distributed mutex via atomic Redis commands</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">distributed</span>
+          <span class="badge badge-perf">single-node</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works</div>
+            <ul class="checklist">
+              <li>Atomic <code>SET key value NX PX ttl</code> — sets only if Not eXists</li>
+              <li>Value is a unique token (UUID) — proves ownership on release</li>
+              <li>TTL is <strong>mandatory</strong> — auto-expires stale locks if holder crashes</li>
+              <li>Release: Lua script checks token matches, then DELetes atomically</li>
+              <li>Only safe with a <strong>single Redis primary</strong> — no failover guarantees</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use</div>
+            <ul class="checklist">
+              <li>Preventing duplicate job execution across worker pods</li>
+              <li>Rate limiting per user across multiple API servers</li>
+              <li>Leader election where Redis downtime is acceptable</li>
+              <li>Short-duration locks on non-critical resources</li>
+              <li><strong>Not for:</strong> anything requiring safety guarantees on Redis failover</li>
+            </ul>
+          </div>
+          <div class="compare-row">
+            <div class="compare-chip"><span class="chip-label">Fault tolerance</span><span class="chip-val">Low (1 node)</span></div>
+            <div class="compare-chip"><span class="chip-label">Latency</span><span class="chip-val">~1ms</span></div>
+            <div class="compare-chip"><span class="chip-label">Complexity</span><span class="chip-val">Low</span></div>
+            <div class="compare-chip"><span class="chip-label">Correctness</span><span class="chip-val">Best-effort</span></div>
+          </div>
+          <div class="code-snippet">
+            <div class="code-label">Redis · acquire + release with Lua</div>
+<pre><span class="cm"># Acquire (NX = only if not exists, PX = TTL in ms)</span>
+<span class="fn">SET</span> lock:job:42 <span class="str">"uuid-abc-123"</span> NX PX <span class="num">30000</span>
+<span class="cm"># Returns OK on success, nil if already locked</span>
+
+<span class="cm"># Release: Lua script — check + delete atomically</span>
+<span class="kw">if</span> redis.call(<span class="str">"GET"</span>, KEYS[<span class="num">1</span>]) == ARGV[<span class="num">1</span>] <span class="kw">then</span>
+    <span class="kw">return</span> redis.call(<span class="str">"DEL"</span>, KEYS[<span class="num">1</span>])
+<span class="kw">else</span>
+    <span class="kw">return</span> <span class="num">0</span>  <span class="cm">-- not the owner, refuse to delete</span>
+<span class="kw">end</span></pre>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">🚨</span>
+            <div class="tip-text"><strong>Never DEL without verifying ownership.</strong> If you skip the Lua check, you might delete a lock acquired by another process after yours expired. The UUID token + Lua atomicity pattern is mandatory, not optional. Without it you have a race condition on the release path.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. REDLOCK -->
+    <div class="lock" style="--lock-color: var(--redlock)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">🔴</div>
+        <div class="lock-meta">
+          <div class="lock-name">Redlock Algorithm</div>
+          <div class="lock-tagline">Fault-tolerant distributed lock across N independent Redis nodes</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">distributed</span>
+          <span class="badge badge-perf">multi-node</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works</div>
+            <ul class="checklist">
+              <li>Requires <strong>N independent Redis nodes</strong> (typically 5, no replication between them)</li>
+              <li>Client tries SET NX on all N nodes sequentially, recording elapsed time</li>
+              <li>Lock succeeds only if acquired on <strong>majority (⌊N/2⌋ + 1)</strong> nodes</li>
+              <li>Valid TTL = original TTL − time spent acquiring</li>
+              <li>On any failure: release all acquired nodes and abort</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use / avoid</div>
+            <ul class="checklist">
+              <li>Distributed mutex resilient to single Redis node failure</li>
+              <li>Acceptable: slightly higher latency for stronger availability</li>
+              <li><strong>Controversy:</strong> Martin Kleppmann showed GC pauses + clock skew can still violate safety — fencing tokens are needed for true correctness</li>
+              <li><strong>For strong guarantees:</strong> use etcd or ZooKeeper instead</li>
+            </ul>
+          </div>
+          <div class="compare-row">
+            <div class="compare-chip"><span class="chip-label">Nodes needed</span><span class="chip-val">5 (typical)</span></div>
+            <div class="compare-chip"><span class="chip-label">Fault tolerance</span><span class="chip-val">⌊N/2⌋ failures</span></div>
+            <div class="compare-chip"><span class="chip-label">Latency</span><span class="chip-val">~5ms</span></div>
+            <div class="compare-chip"><span class="chip-label">Correctness</span><span class="chip-val">Probabilistic</span></div>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">🎓</span>
+            <div class="tip-text"><strong>The fencing token pattern solves the GC pause problem.</strong> Even with Redlock, a GC pause can make a process hold a lock past its TTL while believing it's still valid. Fix: lock service returns a monotonically increasing fencing token with each grant. The storage backend rejects any write carrying an older token. Safe even under clock skew.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. ZOOKEEPER / ETCD -->
+    <div class="lock" style="--lock-color: var(--zk)" onclick="toggle(this)">
+      <div class="lock-header">
+        <div class="lock-icon">🌳</div>
+        <div class="lock-meta">
+          <div class="lock-name">ZooKeeper / etcd Consensus Locks</div>
+          <div class="lock-tagline">Strongly consistent distributed locks via Raft or ZAB consensus</div>
+        </div>
+        <div class="lock-badges">
+          <span class="badge badge-scope">distributed</span>
+          <span class="badge badge-perf">CP / strong</span>
+        </div>
+        <svg class="lock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="lock-body">
+        <div class="lock-content">
+          <div class="content-block">
+            <div class="block-title">How it works (etcd)</div>
+            <ul class="checklist">
+              <li>Creates an ephemeral key with a <strong>lease TTL</strong> tied to a client session</li>
+              <li>Uses <strong>Raft consensus</strong> — majority quorum required before any write commits</li>
+              <li>Key auto-deleted if client crashes and fails to renew the lease</li>
+              <li>Monotonic revision numbers serve as built-in fencing tokens</li>
+              <li>ZooKeeper: ephemeral sequential znodes + Watcher mechanism for fair queuing</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">When to use</div>
+            <ul class="checklist">
+              <li><strong>Leader election</strong> in distributed services (used by Kubernetes itself)</li>
+              <li>Cluster membership and service discovery</li>
+              <li>Config distribution requiring strong consistency</li>
+              <li>When correctness is non-negotiable (financial systems, infrastructure)</li>
+              <li>Accept: higher latency (10–50ms) and operational complexity vs Redis</li>
+            </ul>
+          </div>
+          <div class="compare-row">
+            <div class="compare-chip"><span class="chip-label">Consistency</span><span class="chip-val">Strong (CP)</span></div>
+            <div class="compare-chip"><span class="chip-label">Latency</span><span class="chip-val">10–50ms</span></div>
+            <div class="compare-chip"><span class="chip-label">Fault tolerance</span><span class="chip-val">⌊N/2⌋ failures</span></div>
+            <div class="compare-chip"><span class="chip-label">Fencing</span><span class="chip-val">Built-in</span></div>
+          </div>
+          <div class="code-snippet">
+            <div class="code-label">etcd · lease-based distributed lock (Go)</div>
+<pre><span class="cm">// Grant a 30s lease tied to this client session</span>
+lease, _ := client.<span class="fn">Grant</span>(ctx, <span class="num">30</span>)
+
+<span class="cm">// Atomic create-if-not-exists via transaction</span>
+txn := client.<span class="fn">Txn</span>(ctx).<span class="fn">If</span>(
+    clientv3.<span class="fn">Compare</span>(clientv3.<span class="fn">CreateRevision</span>(<span class="str">"lock/job"</span>), <span class="str">"="</span>, <span class="num">0</span>),
+).<span class="fn">Then</span>(
+    clientv3.<span class="fn">OpPut</span>(<span class="str">"lock/job"</span>, nodeID, clientv3.<span class="fn">WithLease</span>(lease.ID)),
+)
+resp, _ := txn.<span class="fn">Commit</span>()
+<span class="cm">// resp.Revision is your fencing token — use it on writes</span></pre>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">🏗️</span>
+            <div class="tip-text"><strong>etcd powers Kubernetes control plane.</strong> Every etcd write goes through Raft — the cluster won't acknowledge until a quorum agrees. This is why etcd revision numbers are safe fencing tokens. For most application-level locking, Redis SET NX is sufficient. Reach for etcd when you're building infrastructure or coordination services.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ S — SENIOR / STAFF INSIGHTS ══ -->
+  <div id="insights" class="section-label">S — Senior / Staff Insights &nbsp;·&nbsp; tradeoffs &amp; real-world pitfalls</div>
+
+  <div class="insights">
+    <div class="insights-grid">
+
+      <div class="insight-card">
+        <div class="insight-number">01</div>
+        <div class="insight-heading">Lock Granularity Is Everything</div>
+        <div class="insight-body">
+          A coarse lock (one mutex for the whole cache) is simple but serializes all access. Fine-grained locks (per-key shards) scale but multiply deadlock surface area. <strong>Stripe your locks</strong> — shard a data structure into N buckets each with its own mutex. Java's ConcurrentHashMap uses 16 stripes by default. The ideal granularity minimizes contention without multiplying lock-ordering bugs. When in doubt, profile first.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-number">02</div>
+        <div class="insight-heading">Lock-Free &gt; Locked When Possible</div>
+        <div class="insight-body">
+          Atomic operations (<code>sync/atomic</code>, <code>java.util.concurrent.atomic</code>) eliminate lock overhead entirely for counters, flags, and pointers. <strong>Rule:</strong> if you only need to atomically update a single value, reach for atomics first. Locks are for multi-step invariants where you need several fields to change together consistently. Lock-free ring buffers and queues can push throughput 5–10× vs mutex-based equivalents.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-number">03</div>
+        <div class="insight-heading">Distributed Locks Are a Last Resort</div>
+        <div class="insight-body">
+          Distributed locks add latency, introduce a new failure mode (lock service outage), and don't compose with DB transactions. Before reaching for Redis SET NX, ask: <strong>can I use DB row-level locking? Can I partition work so each node owns its slice of data exclusively?</strong> Idempotency + at-least-once delivery often eliminates the need for distributed locks entirely. Design for idempotency first — it's more resilient and simpler to reason about.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-number">04</div>
+        <div class="insight-heading">The Thundering Herd Problem</div>
+        <div class="insight-body">
+          When a popular cache key expires, thousands of requests simultaneously find a cache miss and stampede the DB. Solutions: <strong>probabilistic early expiration</strong> (randomly refresh before TTL), <strong>mutex-protected cache fill</strong> (only one goroutine rebuilds; others wait on the same future), or <strong>stale-while-revalidate</strong> (serve stale data while one worker refreshes async). Go's <code>singleflight</code> package is the canonical fix — it collapses concurrent identical requests into one.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-number">05</div>
+        <div class="insight-heading">Clock Skew Breaks Naive Distributed Locks</div>
+        <div class="insight-body">
+          TTL-based distributed locks assume synchronized clocks. In practice, NTP drift, GC pauses (stop-the-world can be hundreds of ms), or VM live-migration can cause a process to hold a lock past its TTL while thinking it's still valid. <strong>Always pair distributed locks with fencing tokens</strong> — monotonically increasing values the storage backend uses to reject out-of-order writes. Never use wall-clock timestamps as validity checks.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-number">06</div>
+        <div class="insight-heading">Profile Contention Before Optimizing</div>
+        <div class="insight-body">
+          Before switching Mutex → RWMutex or sharding, <strong>measure first</strong>. Go's <code>pprof</code> mutex profile shows exact contention points. Java has <code>-XX:+PrintConcurrentLocks</code>. Most contention is in 1–2 hot paths. Switching from pessimistic to optimistic locking on a high-contention row can actually make things worse — more retries, more wasted work, higher CPU. Profile, don't guess.
+        </div>
+      </div>
+
+      <div class="insight-card full">
+        <div class="insight-number">07</div>
+        <div class="insight-heading">Interview Signal: Frame Every Lock Decision as a Tradeoff</div>
+        <div class="insight-body">
+          Strong candidates don't just name the right lock — they articulate the tradeoff clearly. <strong>"I'd use optimistic locking here because reads dominate and retries are cheap. If contention were high or the write cycle long, I'd switch to pessimistic to avoid wasted retry work."</strong> For distributed: <strong>"Redis SET NX gives us sub-millisecond latency and simplicity, but only best-effort safety. If this is a financial ledger or infrastructure coordination, I'd pay the 10–50ms for etcd's strong consistency and built-in fencing tokens."</strong> The ability to move fluidly between lock types based on workload characteristics — and explain why — is the mark of a senior engineer.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DECISION MATRIX -->
+    <div class="matrix">
+      <div class="matrix-title">Quick-pick decision matrix</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Lock Type</th>
+            <th>Scope</th>
+            <th>Blocking</th>
+            <th>Best Contention Fit</th>
+            <th>Correctness</th>
+            <th>Reach for it when…</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--mutex)">Mutex</td>
+            <td>In-process</td>
+            <td><span class="y">Sleep</span></td>
+            <td><span class="g">Low–Med</span></td>
+            <td><span class="g">Strong</span></td>
+            <td>Protecting any shared mutable state</td>
+          </tr>
+          <tr>
+            <td style="color:var(--rwlock)">RWMutex</td>
+            <td>In-process</td>
+            <td><span class="y">Sleep</span></td>
+            <td><span class="g">Read-heavy (&gt;80%)</span></td>
+            <td><span class="g">Strong</span></td>
+            <td>Reads dominate; writes are rare</td>
+          </tr>
+          <tr>
+            <td style="color:var(--spinlock)">Spinlock</td>
+            <td>In-process</td>
+            <td><span class="r">Busy-wait</span></td>
+            <td><span class="g">Very low, ultra-short</span></td>
+            <td><span class="g">Strong</span></td>
+            <td>Kernel / RT, &lt;100ns critical sections</td>
+          </tr>
+          <tr>
+            <td style="color:var(--semaphore)">Semaphore</td>
+            <td>In-process</td>
+            <td><span class="y">Sleep</span></td>
+            <td><span class="g">Any</span></td>
+            <td><span class="g">Strong</span></td>
+            <td>Limiting pool of N concurrent resources</td>
+          </tr>
+          <tr>
+            <td style="color:var(--reentrant)">Reentrant</td>
+            <td>In-process</td>
+            <td><span class="y">Sleep</span></td>
+            <td><span class="g">Low</span></td>
+            <td><span class="g">Strong</span></td>
+            <td>Recursive call graphs (prefer refactor first)</td>
+          </tr>
+          <tr>
+            <td style="color:var(--optimistic)">Optimistic / CAS</td>
+            <td>In-proc &amp; DB</td>
+            <td><span class="g">None</span></td>
+            <td><span class="y">Low contention only</span></td>
+            <td><span class="g">Strong</span></td>
+            <td>Rare conflicts; retries are cheap</td>
+          </tr>
+          <tr>
+            <td style="color:var(--pessimistic)">Pessimistic</td>
+            <td>DB</td>
+            <td><span class="r">Blocks others</span></td>
+            <td><span class="r">High contention</span></td>
+            <td><span class="g">Strong</span></td>
+            <td>Inventory, seat booking, ledger rows</td>
+          </tr>
+          <tr>
+            <td style="color:var(--distrib)">Redis SET NX</td>
+            <td>Distributed</td>
+            <td><span class="y">Poll/retry</span></td>
+            <td><span class="g">Low–Med</span></td>
+            <td><span class="y">Best-effort</span></td>
+            <td>Dedup jobs, cross-pod rate limiting</td>
+          </tr>
+          <tr>
+            <td style="color:var(--redlock)">Redlock</td>
+            <td>Distributed</td>
+            <td><span class="y">Poll/retry</span></td>
+            <td><span class="g">Low–Med</span></td>
+            <td><span class="y">Probabilistic</span></td>
+            <td>Redis HA required; tolerable edge-case risk</td>
+          </tr>
+          <tr>
+            <td style="color:var(--zk)">etcd / ZooKeeper</td>
+            <td>Distributed</td>
+            <td><span class="y">Watch/wait</span></td>
+            <td><span class="g">Low</span></td>
+            <td><span class="g">Strong (CP)</span></td>
+            <td>Leader election, infrastructure coordination</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggle(el) {
+    const wasOpen = el.classList.contains('open');
+    document.querySelectorAll('.lock.open').forEach(s => s.classList.remove('open'));
+    if (!wasOpen) el.classList.add('open');
+  }
+  // Open first card by default
+  document.querySelector('.lock').classList.add('open');
+</script>
+</body>
+</html>

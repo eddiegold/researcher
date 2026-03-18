@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RADIO — Distributed Systems Design Framework</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #17171f;
+    --border: rgba(255,255,255,0.07);
+    --accent-r: #ff4d6d;
+    --accent-a: #ff9f43;
+    --accent-d: #54d782;
+    --accent-i: #4ecdc4;
+    --accent-o: #a78bfa;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --subtle: #3a3a4a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.6;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(52px, 10vw, 88px);
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.5) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.01em;
+  }
+
+  /* Timer bar */
+  .timer-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.6s 0.1s ease both;
+  }
+
+  .timer-segment {
+    height: 4px;
+    border-radius: 2px;
+    flex: 1;
+    max-width: 120px;
+    opacity: 0.3;
+    transition: opacity 0.3s;
+    cursor: pointer;
+  }
+  .timer-segment:hover { opacity: 0.6; }
+  .timer-segment.active { opacity: 1; }
+
+  .timer-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Steps */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    animation: fadeUp 0.5s ease both;
+  }
+  .step:hover { transform: translateX(3px); }
+  .step.open { border-color: var(--step-color, #fff); }
+  .step:nth-child(1) { animation-delay: 0.1s; --step-color: var(--accent-r); }
+  .step:nth-child(2) { animation-delay: 0.15s; --step-color: var(--accent-a); }
+  .step:nth-child(3) { animation-delay: 0.2s; --step-color: var(--accent-d); }
+  .step:nth-child(4) { animation-delay: 0.25s; --step-color: var(--accent-i); }
+  .step:nth-child(5) { animation-delay: 0.3s; --step-color: var(--accent-o); }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 24px;
+  }
+
+  .step-letter {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 36px;
+    line-height: 1;
+    color: var(--step-color);
+    width: 44px;
+    flex-shrink: 0;
+    text-shadow: 0 0 30px var(--step-color);
+  }
+
+  .step-meta {
+    flex: 1;
+  }
+
+  .step-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+  }
+
+  .step-tagline {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .step-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--step-color);
+    background: color-mix(in srgb, var(--step-color) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--step-color) 25%, transparent);
+    padding: 4px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+
+  .step-chevron {
+    width: 20px;
+    height: 20px;
+    color: var(--muted);
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+  }
+  .step.open .step-chevron { transform: rotate(180deg); }
+
+  /* Expandable content */
+  .step-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .step.open .step-body { max-height: 1200px; }
+
+  .step-content {
+    padding: 0 24px 24px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .step-content { grid-template-columns: 1fr; }
+  }
+
+  .step-content.single { grid-template-columns: 1fr; }
+
+  .content-block {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .block-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--step-color);
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+
+  .checklist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: rgba(232,232,240,0.85);
+    font-weight: 400;
+  }
+
+  .checklist li::before {
+    content: '→';
+    color: var(--step-color);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  .tip-box {
+    grid-column: 1 / -1;
+    background: color-mix(in srgb, var(--step-color) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--step-color) 20%, transparent);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .tip-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .tip-text {
+    font-size: 13px;
+    color: color-mix(in srgb, var(--step-color) 80%, white);
+    line-height: 1.5;
+  }
+
+  .tip-text strong {
+    font-weight: 600;
+    color: var(--step-color);
+  }
+
+  /* Quick Reference card */
+  .quick-ref {
+    margin-top: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    animation: fadeUp 0.5s 0.4s ease both;
+  }
+
+  .quick-ref-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .acronym-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .acronym-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    flex: 1;
+    min-width: 140px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .acronym-pill:hover { border-color: var(--pill-color); }
+
+  .pill-letter {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--pill-color);
+    line-height: 1;
+  }
+
+  .pill-text {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.3;
+  }
+
+  .pill-word {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    display: block;
+  }
+
+  /* Interview flow */
+  .flow {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 16px;
+    overflow-x: auto;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  .flow-node {
+    text-align: center;
+    padding: 0 10px;
+  }
+
+  .flow-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    margin: 0 auto 5px;
+  }
+
+  .flow-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .flow-arrow {
+    width: 20px;
+    height: 1px;
+    background: var(--subtle);
+    flex-shrink: 0;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="label">System Design Interview Framework</div>
+    <div class="title">RADIO</div>
+    <div class="subtitle">A 5-step mental model for designing distributed systems in 60 minutes</div>
+  </div>
+
+  <!-- Timer visualization -->
+  <div class="timer-bar">
+    <span class="timer-label">0</span>
+    <div class="timer-segment active" style="background: var(--accent-r)"></div>
+    <div class="timer-segment active" style="background: var(--accent-a)"></div>
+    <div class="timer-segment active" style="background: var(--accent-d)"></div>
+    <div class="timer-segment active" style="background: var(--accent-i)"></div>
+    <div class="timer-segment active" style="background: var(--accent-o)"></div>
+    <span class="timer-label">60 min</span>
+  </div>
+
+  <div class="steps">
+
+    <!-- R -->
+    <div class="step" onclick="toggle(this)">
+      <div class="step-header">
+        <div class="step-letter">R</div>
+        <div class="step-meta">
+          <div class="step-name">Requirements & Constraints</div>
+          <div class="step-tagline">Nail the problem before touching the solution</div>
+        </div>
+        <div class="step-time">~8 min</div>
+        <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <div class="content-block">
+            <div class="block-title">Functional</div>
+            <ul class="checklist">
+              <li>What are the core user-facing features? (list 3–5 max)</li>
+              <li>What does each feature need to do, end-to-end?</li>
+              <li>Who are the actors and what actions do they take?</li>
+              <li>Any out-of-scope features to explicitly set aside?</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">Non-Functional</div>
+            <ul class="checklist">
+              <li><strong>Scale:</strong> DAU, requests/sec, data volume</li>
+              <li><strong>Latency:</strong> p99 read/write targets (ms)</li>
+              <li><strong>Availability:</strong> 99.9% vs 99.99%? Tolerate stale data?</li>
+              <li><strong>Consistency:</strong> Strong, eventual, or read-your-writes?</li>
+              <li><strong>Durability:</strong> Can we lose writes?</li>
+            </ul>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">⚡</span>
+            <div class="tip-text"><strong>Drive the conversation.</strong> Don't wait for the interviewer to hand you requirements — ask targeted questions and write the constraints on the board. This signals engineering maturity. The most important trade-off to surface early: <strong>read-heavy vs write-heavy</strong> and <strong>consistency vs availability</strong>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- A -->
+    <div class="step" onclick="toggle(this)">
+      <div class="step-header">
+        <div class="step-letter">A</div>
+        <div class="step-meta">
+          <div class="step-name">API Design</div>
+          <div class="step-tagline">Define contracts before internals</div>
+        </div>
+        <div class="step-time">~8 min</div>
+        <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <div class="content-block">
+            <div class="block-title">Sketch the surface area</div>
+            <ul class="checklist">
+              <li>Enumerate one endpoint per core feature (method, path, key params)</li>
+              <li>Identify request/response payloads — just the critical fields</li>
+              <li>Note pagination strategy (cursor vs offset)</li>
+              <li>Flag any streaming or async patterns needed</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">Key decisions</div>
+            <ul class="checklist">
+              <li>REST vs gRPC vs GraphQL — pick based on client needs</li>
+              <li>Sync response vs async job + polling/webhook?</li>
+              <li>Auth model: token, session, API key?</li>
+              <li>Rate limiting strategy at API layer?</li>
+            </ul>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <div class="tip-text"><strong>APIs are a forcing function.</strong> Designing the interface first reveals hidden complexity — you'll discover fan-out, aggregation, or async needs before you're deep in architecture. Keep it lean: 3–5 endpoints is usually enough to demonstrate understanding.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- D -->
+    <div class="step" onclick="toggle(this)">
+      <div class="step-header">
+        <div class="step-letter">D</div>
+        <div class="step-meta">
+          <div class="step-name">Data Model & Storage</div>
+          <div class="step-tagline">Pick the right stores, then sketch the schema</div>
+        </div>
+        <div class="step-time">~12 min</div>
+        <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <div class="content-block">
+            <div class="block-title">Choose your stores</div>
+            <ul class="checklist">
+              <li><strong>Relational (Postgres):</strong> complex joins, ACID transactions</li>
+              <li><strong>Wide-column (Cassandra/DynamoDB):</strong> massive write throughput, time-series</li>
+              <li><strong>Document (MongoDB):</strong> flexible schema, hierarchical data</li>
+              <li><strong>Cache (Redis):</strong> hot reads, sessions, counters, pub-sub</li>
+              <li><strong>Blob (S3):</strong> media, large files, backups</li>
+              <li><strong>Search (Elasticsearch):</strong> full-text, faceted queries</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">Schema & access patterns</div>
+            <ul class="checklist">
+              <li>Define entities and their key fields</li>
+              <li>Identify primary access pattern → drives partitioning/index strategy</li>
+              <li>Denormalize if read-heavy; normalize if write-heavy</li>
+              <li>Pick partition key to avoid hot spots</li>
+              <li>Plan indexes for your top 2–3 query patterns</li>
+            </ul>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">⚡</span>
+            <div class="tip-text"><strong>Start with the access pattern, not the entity.</strong> "What query is being served most?" determines schema far more than "what data exists." For NoSQL, your partition key is your most important design decision — think about distribution and hot partitions upfront.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I -->
+    <div class="step" onclick="toggle(this)">
+      <div class="step-header">
+        <div class="step-letter">I</div>
+        <div class="step-meta">
+          <div class="step-name">Infrastructure & High-Level Design</div>
+          <div class="step-tagline">Draw the system, then scale it</div>
+        </div>
+        <div class="step-time">~18 min</div>
+        <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <div class="content-block">
+            <div class="block-title">Draw the happy path first</div>
+            <ul class="checklist">
+              <li>Client → LB → Service(s) → DB — get this on the board fast</li>
+              <li>Show data flow for the 1–2 most important features</li>
+              <li>Add a CDN/cache layer if read-heavy</li>
+              <li>Add a message queue if write-heavy or async processing needed</li>
+              <li>Show where async workers / consumers live</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">Scale each layer</div>
+            <ul class="checklist">
+              <li><strong>Compute:</strong> horizontal scaling, stateless services</li>
+              <li><strong>Data:</strong> replication (read replicas), sharding/partitioning</li>
+              <li><strong>Cache:</strong> CDN for static, Redis for hot data, cache-aside vs write-through</li>
+              <li><strong>Queue:</strong> Kafka (high throughput) vs SQS (managed, simpler)</li>
+              <li><strong>LB:</strong> L4 vs L7, sticky sessions if stateful</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">Key architectural patterns</div>
+            <ul class="checklist">
+              <li>Fan-out on write vs fan-out on read (news feed, notifications)</li>
+              <li>CQRS — separate read/write models for high-scale reads</li>
+              <li>Event sourcing — when full audit trail matters</li>
+              <li>Saga pattern — distributed transactions across services</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">Failure & consistency</div>
+            <ul class="checklist">
+              <li>What happens when the DB is down? Circuit breakers?</li>
+              <li>Idempotency keys for retried writes</li>
+              <li>Eventual consistency — what's the lag tolerance?</li>
+              <li>Leader election for stateful components</li>
+            </ul>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">🗺️</span>
+            <div class="tip-text"><strong>Diagram first, details second.</strong> Interviewers want to see your mental model of the whole system before you dive into any component. Draw boxes and arrows, narrate as you go, then drill into complexity. Use a queue anytime you see an impedance mismatch between producers and consumers.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- O -->
+    <div class="step" onclick="toggle(this)">
+      <div class="step-header">
+        <div class="step-letter">O</div>
+        <div class="step-meta">
+          <div class="step-name">Operability & Deep Dives</div>
+          <div class="step-tagline">Show the system is production-ready and go deep</div>
+        </div>
+        <div class="step-time">~14 min</div>
+        <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <div class="content-block">
+            <div class="block-title">Reliability & Resilience</div>
+            <ul class="checklist">
+              <li>Replication factor and failover strategy per store</li>
+              <li>Retry logic with exponential backoff + jitter</li>
+              <li>Bulkhead / circuit breaker between services</li>
+              <li>Graceful degradation — what works in a partial outage?</li>
+              <li>Multi-region: active-active vs active-passive?</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">Observability</div>
+            <ul class="checklist">
+              <li>Metrics: latency (p50/p99), error rate, throughput</li>
+              <li>Distributed tracing (correlation IDs across services)</li>
+              <li>Structured logging with sampling strategy</li>
+              <li>Alerts on SLO breach, not just raw errors</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">Security & Compliance</div>
+            <ul class="checklist">
+              <li>Authz: who can access what? (RBAC/ABAC)</li>
+              <li>Encryption at rest and in transit</li>
+              <li>Rate limiting & abuse prevention</li>
+              <li>PII handling — where is user data stored?</li>
+            </ul>
+          </div>
+          <div class="content-block">
+            <div class="block-title">Interviewer-directed deep dives</div>
+            <ul class="checklist">
+              <li>Pick your 1–2 hardest unsolved problems and propose solutions</li>
+              <li>Respond to "what if traffic 10×s overnight?"</li>
+              <li>Explain trade-offs you made and what you'd do differently at larger scale</li>
+              <li>Know your bottlenecks and how to measure them</li>
+            </ul>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">🎯</span>
+            <div class="tip-text"><strong>This is where senior engineers shine.</strong> Raise the hard problems yourself — don't wait for the interviewer. "The tricky part here is X, and here's how I'd handle it" is far stronger than being led there. Have 2–3 trade-off narratives ready.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick Reference -->
+  <div class="quick-ref">
+    <div class="quick-ref-title">Quick Reference — RADIO at a glance</div>
+    <div class="acronym-row">
+      <div class="acronym-pill" style="--pill-color: var(--accent-r)" onclick="scrollTo(0,0)">
+        <div class="pill-letter">R</div>
+        <div class="pill-text"><span class="pill-word">Requirements</span>8 min · clarify scope</div>
+      </div>
+      <div class="acronym-pill" style="--pill-color: var(--accent-a)">
+        <div class="pill-letter">A</div>
+        <div class="pill-text"><span class="pill-word">API Design</span>8 min · define contracts</div>
+      </div>
+      <div class="acronym-pill" style="--pill-color: var(--accent-d)">
+        <div class="pill-letter">D</div>
+        <div class="pill-text"><span class="pill-word">Data Model</span>12 min · store + schema</div>
+      </div>
+      <div class="acronym-pill" style="--pill-color: var(--accent-i)">
+        <div class="pill-letter">I</div>
+        <div class="pill-text"><span class="pill-word">Infrastructure</span>18 min · draw + scale</div>
+      </div>
+      <div class="acronym-pill" style="--pill-color: var(--accent-o)">
+        <div class="pill-letter">O</div>
+        <div class="pill-text"><span class="pill-word">Operability</span>14 min · prod-ready</div>
+      </div>
+    </div>
+
+    <!-- flow bar -->
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-node">
+          <div class="flow-dot" style="background: color-mix(in srgb, var(--accent-r) 15%, transparent); color: var(--accent-r); border: 1px solid var(--accent-r)">R</div>
+          <div class="flow-time">0–8</div>
+        </div>
+        <div class="flow-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-node">
+          <div class="flow-dot" style="background: color-mix(in srgb, var(--accent-a) 15%, transparent); color: var(--accent-a); border: 1px solid var(--accent-a)">A</div>
+          <div class="flow-time">8–16</div>
+        </div>
+        <div class="flow-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-node">
+          <div class="flow-dot" style="background: color-mix(in srgb, var(--accent-d) 15%, transparent); color: var(--accent-d); border: 1px solid var(--accent-d)">D</div>
+          <div class="flow-time">16–28</div>
+        </div>
+        <div class="flow-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-node">
+          <div class="flow-dot" style="background: color-mix(in srgb, var(--accent-i) 15%, transparent); color: var(--accent-i); border: 1px solid var(--accent-i)">I</div>
+          <div class="flow-time">28–46</div>
+        </div>
+        <div class="flow-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-node">
+          <div class="flow-dot" style="background: color-mix(in srgb, var(--accent-o) 15%, transparent); color: var(--accent-o); border: 1px solid var(--accent-o)">O</div>
+          <div class="flow-time">46–60</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggle(el) {
+    const wasOpen = el.classList.contains('open');
+    document.querySelectorAll('.step.open').forEach(s => s.classList.remove('open'));
+    if (!wasOpen) el.classList.add('open');
+  }
+
+  // Open first step by default
+  document.querySelector('.step').classList.add('open');
+</script>
+</body>
+</html>
